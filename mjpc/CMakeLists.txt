@@ -76,6 +76,13 @@ add_library(
   tasks/swimmer/swimmer.h
   tasks/walker/walker.cc
   tasks/walker/walker.h
+  tasks/exo/walking.cc
+  tasks/exo/walking.h
+  tasks/exo/utils.cpp
+  tasks/exo/utils.hpp
+  tasks/exo/bezier_tools.cpp
+  tasks/exo/bezier_tools.hpp
+  tasks/exo/ExoConstants.hpp
   planners/planner.cc
   planners/planner.h
   planners/policy.h
@@ -140,11 +147,26 @@ add_library(
   task.h
   $<TARGET_OBJECTS:mujoco::platform_ui_adapter>
 )
+
+SET(yaml-cpp_DIR $ENV{REPOS_PATH}/yaml-cpp_install/lib/cmake/yaml-cpp)
+include_directories(${REPOS_PATH}/yaml-cpp_install/include)
+find_package(yaml-cpp REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+SET(PINOCCHIO_DIR $ENV{REPOS_PATH}/pinocchio_install CACHE PATH "Path to pinocchio dir")
+include_directories(${PINOCCHIO_DIR}/include)
+list(APPEND CMAKE_PREFIX_PATH ${PINOCCHIO_DIR})
+find_package(pinocchio REQUIRED HINTS ${PINOCCHIO_DIR}/lib)
+
+
 set_target_properties(libmjpc PROPERTIES OUTPUT_NAME mjpc)
 target_compile_options(libmjpc PUBLIC ${MJPC_COMPILE_OPTIONS})
 target_compile_definitions(libmjpc PRIVATE MJSIMULATE_STATIC)
 target_link_libraries(
   libmjpc
+  yaml-cpp::yaml-cpp 
+  ${PINOCCHIO_LIBRARIES}
+  Eigen3::Eigen
   absl::any_invocable
   absl::check
   absl::flat_hash_map

@@ -124,6 +124,9 @@ class Task {
   virtual std::string Name() const = 0;
   virtual std::string XmlPath() const = 0;
 
+  //custom modification
+  virtual void GetNominalAction(const mjModel* model, double* action,mjData* kin_data, double time) const {};
+
   // mode
   int mode;
 
@@ -141,6 +144,11 @@ class Task {
   std::vector<double> weight;
   std::vector<double> norm_parameter;
   double risk;
+
+  //custom modification
+  double step_dur;
+  double initial_t0;
+  int whichStance;
 
   // residual parameters
   std::vector<double> parameters;

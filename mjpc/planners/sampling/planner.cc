@@ -139,6 +139,18 @@ void SamplingPlanner::SetState(const State& state) {
                &this->time);
 }
 
+void SamplingPlanner::ResizeKinMjData(const mjModel* model, int num_threads) {
+  int new_size = std::max(1, num_threads);
+  if (kin_data_.size() > new_size) {
+    kin_data_.erase(kin_data_.begin() + new_size, kin_data_.end());
+  } else {
+    kin_data_.reserve(new_size);
+    while (kin_data_.size() < new_size) {
+      kin_data_.push_back(MakeUniqueMjData(mj_makeData(model)));
+    }
+  }
+}
+
 int SamplingPlanner::OptimizePolicyCandidates(int ncandidates, int horizon,
                                               ThreadPool& pool) {
   // if num_trajectory_ has changed, use it in this new iteration.
@@ -147,6 +159,7 @@ int SamplingPlanner::OptimizePolicyCandidates(int ncandidates, int horizon,
   int num_trajectory = num_trajectory_;
   ncandidates = std::min(ncandidates, num_trajectory);
   ResizeMjData(model, pool.NumThreads());
+  ResizeKinMjData(model, pool.NumThreads());
 
   // ----- rollout noisy policies ----- //
   // start timer
@@ -310,6 +323,7 @@ void SamplingPlanner::Rollouts(int num_trajectory, int horizon,
         const std::shared_lock<std::shared_mutex> lock(s.mtx_);
         s.candidate_policy[i].CopyFrom(s.policy, s.policy.num_spline_points);
         s.candidate_policy[i].representation = s.policy.representation;
+        s.candidate_policy[i].kin_data = s.kin_data_[ThreadPool::WorkerId()].get();
       }
 
       // sample noise policy

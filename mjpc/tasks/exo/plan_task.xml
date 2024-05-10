@@ -1,0 +1,124 @@
+<mujoco model="Exo">
+  <include file="ExoPD.xml" />
+      <keyframe>
+      <key name="home" qpos="-0.1227    0.1525    0.9352    0.9914    0.0166    0.1300    0.0012    0.0584   -0.0446   -0.3071    0.2148   -0.1642   -0.1277   -0.1346    0.0344   -0.4929    0.2830   -0.0461    0.1192" 
+      qvel="0.1666   -0.4778    0.1095    0.3401    0.3672   -0.2770    0.1365    0.2581   -0.0797   -0.0995   -0.0589    0.1830    0.1788    0.2847   -0.3850    0.2678   -0.6886   -0.1095" />
+   </keyframe>
+   
+  <size memory="100K" nuserdata="2"/>
+
+    <actuator>
+      <general forcelimited="true" forcerange="-350  350" ctrlrange="-0.17453292 0.29670596" joint="LeftFrontalHipJoint" class="multi_mode_hip_actuator"
+             name="LeftFrontalHipLink_actuator"/>
+      <general forcelimited="true" forcerange="-180  180" ctrlrange="-0.17453292 0.34906584" joint="LeftTransverseHipJoint" class="multi_mode_hip_actuator"
+             name="LeftTransverseHipLink_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="-2.0071287 0.2617994" joint="LeftSagittalHipJoint" class="multi_mode_hip_actuator"
+             name="LeftSagittalHipLink_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="0 1.9198622" joint="LeftSagittalKneeJoint" class="multi_mode_knee_actuator"
+             name="LeftSagittalKneeLink_actuator"/>
+      <general forcelimited="true" forcerange="-184  184" ctrlrange="-0.27925268 0.15707964" joint="LeftSagittalAnkleJoint" class="multi_mode_ankle_actuator"
+             name="LeftSagittalAnkleLink_actuator"/>
+      <general forcelimited="true" forcerange="-82  82" ctrlrange="-0.31415927 0.31415927" joint="LeftHenkeAnkleJoint" class="multi_mode_ankle_actuator"
+             name="LeftHenkeAnkleLink_actuator"/>
+      <general forcelimited="true" forcerange="-350  350" ctrlrange="-0.29670596 0.17453292" joint="RightFrontalHipJoint" class="multi_mode_hip_actuator"
+             name="RightFrontalHipLink_actuator"/>
+      <general forcelimited="true" forcerange="-180  180" ctrlrange="-0.34906584 0.17453292" joint="RightTransverseHipJoint" class="multi_mode_hip_actuator"
+             name="RightTransverseHipLink_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="-2.0071287 0.2617994" joint="RightSagittalHipJoint" class="multi_mode_hip_actuator"
+             name="RightSagittalHipLink_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="0 1.9198622" joint="RightSagittalKneeJoint" class="multi_mode_knee_actuator"
+             name="RightSagittalKneeLink_actuator"/>
+      <general forcelimited="true" forcerange="-184  184" ctrlrange="-0.27925268  0.15707964" joint="RightSagittalAnkleJoint" class="multi_mode_ankle_actuator"
+             name="RightSagittalAnkleLink_actuator"/>
+      <general forcelimited="true" forcerange="-82  82" ctrlrange="-0.31415927 0.31415927" joint="RightHenkeAnkleJoint" class="multi_mode_ankle_actuator"
+             name="RightHenkeAnkleLink_actuator"/>
+
+
+      <general forcelimited="true" forcerange="-350  350" ctrlrange="-1 1" joint="LeftFrontalHipJoint" class="vel_hip_actuator"
+                  name="LeftFrontalHipLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-180  180" ctrlrange="-1 1" joint="LeftTransverseHipJoint" class="vel_hip_actuator"
+                  name="LeftTransverseHipLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="-1 1" joint="LeftSagittalHipJoint" class="vel_hip_actuator"
+                  name="LeftSagittalHipLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="-5 5" joint="LeftSagittalKneeJoint" class="vel_knee_actuator" 
+                  name="LeftSagittalKneeLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-184  184" ctrlrange="-5 5" joint="LeftSagittalAnkleJoint" class="vel_ankle_actuator"      
+                  name="LeftSagittalAnkleLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-82  82" ctrlrange="-1 1" joint="LeftHenkeAnkleJoint" class="vel_ankle_actuator"
+                  name="LeftHenkeAnkleLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-350  350" ctrlrange="-1 1" joint="RightFrontalHipJoint" class="vel_hip_actuator"
+                  name="RightFrontalHipLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-180  180" ctrlrange="-1 1" joint="RightTransverseHipJoint" class="vel_hip_actuator"
+                  name="RightTransverseHipLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="-1 1" joint="RightSagittalHipJoint" class="vel_hip_actuator"
+                  name="RightSagittalHipLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-219  219" ctrlrange="-1 1" joint="RightSagittalKneeJoint" class="vel_knee_actuator"
+                  name="RightSagittalKneeLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-184  184" ctrlrange="-5 5" joint="RightSagittalAnkleJoint" class="vel_ankle_actuator"
+                  name="RightSagittalAnkleLink_vel_actuator"/>
+      <general forcelimited="true" forcerange="-82  82" ctrlrange="-5 5" joint="RightHenkeAnkleJoint" class="vel_ankle_actuator"
+                  name="RightHenkeAnkleLink_vel_actuator"/>
+   </actuator>
+   
+
+  <custom>
+    <numeric name="agent_planner" data="0" />
+    <numeric name="agent_horizon" data="1" />
+    <numeric name="agent_timestep" data="0.01" />
+    <numeric name="sampling_spline_points" data="2 2 20" />
+    <numeric name="sampling_exploration" data="0.005" />
+    <numeric name="sampling_trajectories" data="10" />
+    <numeric name="gradient_spline_points" data="5" />
+    <numeric name="std_min" data="0.000001 0.000001 0.01" />
+  </custom>
+
+
+
+  <sensor>
+    <user name="com_pos_err" dim="3" user="0 1000 0.0 1000" /> 
+    <user name="pelv_ori_err" dim="3" user="0 50 0.0 100" /> 
+    <user name="sw_ft_err" dim="6" user="0 200 0.0 1000" /> 
+    <user name="com_vel_err" dim="3" user="0 20 0.0 500" /> 
+    <user name="pelv_ang_vel_err" dim="3" user="0 20 0.0 100" />
+    <user name="sw_vel_err" dim="6" user="0 5 0.0 100" />
+    <user name="zaxis" dim="6" user="0 200 0.0 1000" />
+    <user name="joint_err" dim="12" user="0 10 0.0 100" />
+    <user name="joint_vel_err" dim="12" user="0 10 0.0 100" />
+    <framepos name="trace0" objtype="body" objname="torso"/>
+    <!-- <user name="DesState" dim="18" user="0 10 0.0 100" /> 
+    <user name="DesVel" dim="18" user="0 5 0.0 100" />
+    <user name="CoP" dim="4" user="0 10 0.0 100" />
+    <user name = "swing foot traj" dim = "3" user="0 10 0.0 100" />
+    <user name = "stance foot traj" dim = "3" user="0 10 0.0 100" />
+    <user name = "forward_vel" dim="1" user="0 100 0.0 100" />
+    <user name = "des com" dim="2" user="0 0.5 0.0 100" /> -->
+    <touch name="opto1" site="opto1"/>
+    <touch name="opto2" site="opto2"/>
+    <touch name="opto3" site="opto3"/>
+    <touch name="opto4" site="opto4"/>
+    <touch name="opto5" site="opto5"/>
+    <touch name="opto6" site="opto6"/>
+    <touch name="opto7" site="opto7"/>
+    <touch name="opto8" site="opto8"/>
+    <!-- <user name="Feet Ori" dim="6" user="0 0.5 0.0 1" />  -->
+    <subtreecom name="torso_subcom" body="torso"/>
+    <subtreeangmom name="torso_subangmom" body="torso"/>
+    <framezaxis name="torso_up" objtype="body" objname="torso"/>
+    <frameangvel name="torso_angvel" objtype="body" objname="torso"/>
+    <subtreelinvel name="torso_subcomvel" body="torso"/>
+    <framezaxis name="foot_right_up" objtype="site" objname="right_heel_frame"/>
+    <framezaxis name="foot_left_up" objtype="site" objname="left_heel_frame"/>
+    <framepos name="right_heel" objtype="site" objname="right_heel_frame"/>
+    <framepos name="left_heel" objtype="site" objname="left_heel_frame"/>
+    <framequat name="right_heel_ori" objtype="site" objname="right_heel_frame"/>
+    <framequat name="left_heel_ori" objtype="site" objname="left_heel_frame"/>
+    <frameangvel name="foot_left_ang" objtype="site" objname="left_heel_frame"/>
+    <frameangvel name="foot_right_ang" objtype="site" objname="right_heel_frame"/>
+    <framelinvel name="foot_right_vel" objtype="site" objname="right_heel_frame"/>
+    <framelinvel name="foot_left_vel" objtype="site" objname="left_heel_frame"/>
+
+  </sensor>
+
+</mujoco>
+
+

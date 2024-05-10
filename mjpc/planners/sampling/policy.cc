@@ -31,6 +31,12 @@ void SamplingPolicy::Allocate(const mjModel* model, const Task& task,
   // model
   this->model = model;
 
+  //task 
+  this->task = &task;
+
+  // kinematics_data
+  this->kin_data = mj_makeData(model);
+
   // parameters
   parameters.resize(model->nu * kMaxTrajectoryHorizon);
 
@@ -66,8 +72,7 @@ void SamplingPolicy::Reset(int horizon, const double* initial_repeated_action) {
 }
 
 // set action from policy
-void SamplingPolicy::Action(double* action, const double* state,
-                            double time) const {
+void SamplingPolicy::Action(double* action, const double* state, double time) const {
   // find times bounds
   int bounds[2];
   FindInterval(bounds, times, time, num_spline_points);
@@ -86,9 +91,17 @@ void SamplingPolicy::Action(double* action, const double* state,
                        num_spline_points);
   }
 
+  // call nominal policy
+  if(state){
+    task->GetNominalAction(model,action, kin_data, time);
+  }
+
+
   // Clamp controls
   Clamp(action, model->actuator_ctrlrange, model->nu);
 }
+
+
 
 // copy policy
 void SamplingPolicy::CopyFrom(const SamplingPolicy& policy, int horizon) {

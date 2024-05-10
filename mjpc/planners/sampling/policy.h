@@ -52,10 +52,13 @@ class SamplingPolicy : public Policy {
   void CopyParametersFrom(const std::vector<double>& src_parameters,
                           const std::vector<double>& src_times);
 
+
   // ----- members ----- //
   const mjModel* model;
   std::vector<double> parameters;
   std::vector<double> times;
+  const Task* task;
+  mjData* kin_data;
   int num_parameters;
   int num_spline_points;
   PolicyRepresentation representation;

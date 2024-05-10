@@ -196,6 +196,11 @@ add_custom_target(
           ${CMAKE_CURRENT_BINARY_DIR}/op3/op3.xml
           <${CMAKE_CURRENT_SOURCE_DIR}/op3/op3.xml.patch
 
+
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${CMAKE_CURRENT_SOURCE_DIR}/exo/assets
+          ${CMAKE_CURRENT_BINARY_DIR}/exo/assets
+
   COMMAND ${Python_EXECUTABLE}
           ${CMAKE_CURRENT_BINARY_DIR}/manipulation/merge_panda_robotiq.py
           ${CMAKE_CURRENT_BINARY_DIR}/manipulation/panda_robotiq.xml

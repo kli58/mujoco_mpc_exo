@@ -118,6 +118,10 @@ class SamplingPlanner : public RankedPlanner {
   std::vector<double> mocap;
   std::vector<double> userdata;
 
+  //kinematics data
+  std::vector<UniqueMjData> kin_data_;
+  void ResizeKinMjData(const mjModel* model, int num_threads);
+
   // policy
   SamplingPolicy policy;  // (Guarded by mtx_)
   SamplingPolicy candidate_policy[kMaxTrajectory];
