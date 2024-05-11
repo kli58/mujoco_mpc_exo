@@ -47,7 +47,7 @@ void SamplingPlanner::Initialize(mjModel* model, const Task& task) {
   this->task = &task;
 
   // sampling noise
-  noise_exploration = GetNumberOrDefault(0.1, model, "sampling_exploration");
+  noise_exploration = GetNumberOrDefault(0.01, model, "sampling_exploration");
 
   // set number of trajectories to rollout
   num_trajectory_ = GetNumberOrDefault(10, model, "sampling_trajectories");
@@ -88,6 +88,7 @@ void SamplingPlanner::Allocate() {
     trajectory[i].Initialize(num_state, model->nu, task->num_residual,
                              task->num_trace, kMaxTrajectoryHorizon);
     trajectory[i].Allocate(kMaxTrajectoryHorizon);
+    // mjModel* dup_model = mj_copyModel(nullptr,model);
     candidate_policy[i].Allocate(model, *task, kMaxTrajectoryHorizon);
   }
 }
@@ -323,7 +324,7 @@ void SamplingPlanner::Rollouts(int num_trajectory, int horizon,
         const std::shared_lock<std::shared_mutex> lock(s.mtx_);
         s.candidate_policy[i].CopyFrom(s.policy, s.policy.num_spline_points);
         s.candidate_policy[i].representation = s.policy.representation;
-        s.candidate_policy[i].kin_data = s.kin_data_[ThreadPool::WorkerId()].get();
+        // s.candidate_policy[i].kin_data = s.kin_data_[ThreadPool::WorkerId()].get();
       }
 
       // sample noise policy
@@ -332,10 +333,10 @@ void SamplingPlanner::Rollouts(int num_trajectory, int horizon,
       // ----- rollout sample policy ----- //
 
       // policy
-      auto sample_policy_i = [&candidate_policy = s.candidate_policy, &i](
+      auto sample_policy_i = [&candidate_policy = s.candidate_policy, &i, &kin_data_i = s.kin_data_[ThreadPool::WorkerId()]](
                                  double* action, const double* state,
                                  double time) {
-        candidate_policy[i].Action(action, state, time);
+        candidate_policy[i].Plan_Action(action, kin_data_i.get(),state, time);
       };
 
       // policy rollout

@@ -1,11 +1,12 @@
 <mujoco model="Exo">
-  <include file="ExoPD.xml" />
+  <include file="ExoPD_hfield.xml" />
       <keyframe>
       <key name="home" qpos="-0.1227    0.1525    0.9352    0.9914    0.0166    0.1300    0.0012    0.0584   -0.0446   -0.3071    0.2148   -0.1642   -0.1277   -0.1346    0.0344   -0.4929    0.2830   -0.0461    0.1192" 
       qvel="0.1666   -0.4778    0.1095    0.3401    0.3672   -0.2770    0.1365    0.2581   -0.0797   -0.0995   -0.0589    0.1830    0.1788    0.2847   -0.3850    0.2678   -0.6886   -0.1095" />
    </keyframe>
    
-  <size memory="100K" nuserdata="2"/>
+  <size memory="16M" nuserdata="2"/>
+  <!-- <size nuserdata="2"/> -->
 
     <actuator>
       <general forcelimited="true" forcerange="-350  350" ctrlrange="-0.17453292 0.29670596" joint="LeftFrontalHipJoint" class="multi_mode_hip_actuator"
@@ -66,8 +67,8 @@
     <numeric name="agent_horizon" data="1" />
     <numeric name="agent_timestep" data="0.01" />
     <numeric name="sampling_spline_points" data="2 2 20" />
-    <numeric name="sampling_exploration" data="0.005" />
-    <numeric name="sampling_trajectories" data="10" />
+    <numeric name="sampling_exploration" data="0.001" />
+    <numeric name="sampling_trajectories" data="35" />
     <numeric name="gradient_spline_points" data="5" />
     <numeric name="std_min" data="0.000001 0.000001 0.01" />
   </custom>
@@ -76,10 +77,10 @@
 
   <sensor>
     <user name="com_pos_err" dim="3" user="0 1000 0.0 1000" /> 
-    <user name="pelv_ori_err" dim="3" user="0 50 0.0 100" /> 
+    <user name="pelv_ori_err" dim="3" user="0 50 0.0 1000" /> 
     <user name="sw_ft_err" dim="6" user="0 200 0.0 1000" /> 
-    <user name="com_vel_err" dim="3" user="0 20 0.0 500" /> 
-    <user name="pelv_ang_vel_err" dim="3" user="0 20 0.0 100" />
+    <user name="com_vel_err" dim="3" user="0 20 0.0 1000" /> 
+    <user name="pelv_ang_vel_err" dim="3" user="0 20 0.0 1000" />
     <user name="sw_vel_err" dim="6" user="0 5 0.0 100" />
     <user name="zaxis" dim="6" user="0 200 0.0 1000" />
     <user name="joint_err" dim="12" user="0 10 0.0 100" />

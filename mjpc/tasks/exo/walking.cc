@@ -4,7 +4,6 @@
 #include <string>
 
 #include <mujoco/mujoco.h>
-#include "mjpc/utilities.h"
 #include <absl/random/random.h>
 
 #include "yaml-cpp/yaml.h"
@@ -20,10 +19,26 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
 
 
      //instead of use the qpos from state, use the qpos from evaluate jt bezier
-    vector_t q_init,dq_init;
-    std::tie(q_init,dq_init) = walking::evalJtBezier(time-initial_t0,coeff,coeff_remap,whichStance, walkStepDur);
+    int numCycle = static_cast<int>((time-initial_t0) / walkStepDur);
 
-    double scale[12] = {0.1};
+    int curStance = whichStance;
+    // if(numCycle > 0){
+    //   switch (whichStance){
+    //     case Left:{
+    //       curStance = Right;
+    //       break;
+    //     }
+    //     case Right:{
+    //       curStance = Left;
+    //       break;
+    //     }
+    //   }
+    // }
+
+    vector_t q_init,dq_init;
+    std::tie(q_init,dq_init) = walking::evalJtBezier(time-initial_t0 - numCycle * walkStepDur,coeff,coeff_remap,curStance, walkStepDur);
+
+    double scale[12] = {1.0};
     bool jt_space = false;
     if(jt_space){
         for (int i = 0; i < 12; i++) {
@@ -35,7 +50,7 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
         }
     }
     else{
-        std::cout << "IK mode" << std::endl;
+        // std::cout << "IK mode" << std::endl;
 
         matrix_t J_y = matrix_t::Zero(12,18);
         matrix_t J_h = matrix_t::Zero(6,18);
@@ -45,16 +60,15 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
 
         //loop through the first 12 element
         vector_t yd,dyd = vector_t::Zero(12);
-        std::tie(yd,dyd) = evalTaskBezier(time-initial_t0,coeff_task,coeff_task_remap,whichStance, walkStepDur);
+        std::tie(yd,dyd) = evalTaskBezier(time-initial_t0 - numCycle * walkStepDur,coeff_task,coeff_task_remap,curStance, walkStepDur);
 
         // yd[2] = yd[2] - 0.005;
         yDesFull.segment(0,12) = yd;
         dyd.segment(0,12) = dyd;
     
         for(int i=0; i<12;i++){
-        
-            yDesFull[i] = yd[i] + action[i];
-            dyd[i] = dyd[i] + action[i+12];
+            yDesFull[i] = yd[i] + scale[i]*action[i];
+            dyd[i] = dyd[i] + scale[i]*action[i+12];
         }
 
         Eigen::VectorXd err;
@@ -89,7 +103,7 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
             err = yDesFull - yCur;
             if (err.cwiseAbs().maxCoeff() < 1e-3) {
                 success = true;
-                std::cout << "IK converged in " << i << " iterations" << std::endl;
+                // std::cout << "IK converged in " << i << " iterations" << std::endl;
                 break;
             }
 
@@ -474,7 +488,7 @@ void walking::TransitionLocked(mjModel* model, mjData* data) {
 
   switch (whichStance){
     case Left:{
-      if (right_grf > 400 && data->time - initial_t0 > 0.5){
+      if (right_grf > 400 && data->time - initial_t0 > 0.8){
         whichStance = Right;
         initial_t0 = data->time;
         std::cout << "Switch to Right" << std::endl;
@@ -482,7 +496,7 @@ void walking::TransitionLocked(mjModel* model, mjData* data) {
       break;
     }
     case Right:{
-      if (left_grf > 400 && data->time - initial_t0 > 0.5){
+      if (left_grf > 400 && data->time - initial_t0 > 0.8){
         whichStance = Left;
         initial_t0 = data->time;
         std::cout << "Switch to Left" << std::endl;

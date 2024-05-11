@@ -35,6 +35,7 @@ void SamplingPolicy::Allocate(const mjModel* model, const Task& task,
   this->task = &task;
 
   // kinematics_data
+
   this->kin_data = mj_makeData(model);
 
   // parameters
@@ -92,8 +93,40 @@ void SamplingPolicy::Action(double* action, const double* state, double time) co
   }
 
   // call nominal policy
-  if(state){
+  if(state){  
+    
     task->GetNominalAction(model,action, kin_data, time);
+  }
+
+
+  // Clamp controls
+  Clamp(action, model->actuator_ctrlrange, model->nu);
+}
+
+
+void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const double* state, double time) const {
+  // find times bounds
+  int bounds[2];
+  FindInterval(bounds, times, time, num_spline_points);
+
+  // ----- get action ----- //
+
+  if (bounds[0] == bounds[1] ||
+      representation == PolicyRepresentation::kZeroSpline) {
+    ZeroInterpolation(action, time, times, parameters.data(), model->nu,
+                      num_spline_points);
+  } else if (representation == PolicyRepresentation::kLinearSpline) {
+    LinearInterpolation(action, time, times, parameters.data(), model->nu,
+                        num_spline_points);
+  } else if (representation == PolicyRepresentation::kCubicSpline) {
+    CubicInterpolation(action, time, times, parameters.data(), model->nu,
+                       num_spline_points);
+  }
+
+  // call nominal policy
+  if(state){  
+    
+    task->GetNominalAction(model,action, plan_kin_data, time);
   }
 
 
