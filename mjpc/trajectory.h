@@ -63,6 +63,19 @@ class Trajectory {
       double time, const double* mocap, const double* userdata, double xfrc_std,
       double xfrc_rate, int steps);
 
+    void CustomRollout(
+      std::function<void(double* action, const double* state, double time, double* userdata)>
+          policy,
+      const Task* task, const mjModel* model, mjData* data, const double* state,
+      double time, const double* mocap, const double* userdata, int steps);
+
+  void CustomNoisyRollout(
+      std::function<void(double* action, const double* state, double time, double* userdata)>
+          policy,
+      const Task* task, const mjModel* model, mjData* data, const double* state,
+      double time, const double* mocap, const double* userdata, double xfrc_std,
+      double xfrc_rate, int steps);
+
   // simulate model forward in time with discrete-time indexed policy
   void RolloutDiscrete(
       std::function<void(double* action, const double* state, int index)>

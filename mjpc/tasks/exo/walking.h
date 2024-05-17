@@ -50,12 +50,16 @@ class walking : public Task {
   };
 
   void loadGoalJtPosition();
+  std::tuple<int,double> checkGRF(mjModel* model, mjData* data);
   void TransitionLocked(mjModel* model, mjData* data) override;
   static void evalActualTaskSpaceState(Exo_t::vector_t& y_act,Exo_t::vector_t& yh, Exo_t::vector_t& dy_act, const mjModel* model, const mjData* data,int whichStance);
   walking() : residual_(this) {loadGoalJtPosition();};
   std::vector<double> des;
   
+  void convertAction(double phaseVar, int curStance,double* action, const mjModel* model,mjData* kin_data) const;
+  void GetNominalPlanAction(const mjModel* model, double* action,mjData* kin_data, double time,double* userData) const override;
   void GetNominalAction(const mjModel* model, double* action,mjData* kin_data, double time) const override;
+  void UpdateUserData(const mjModel* model, mjData* data) const override;
   std::string Name() const override;
   std::string XmlPath() const override;
 

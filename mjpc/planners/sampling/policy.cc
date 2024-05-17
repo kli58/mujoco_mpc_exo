@@ -104,7 +104,7 @@ void SamplingPolicy::Action(double* action, const double* state, double time) co
 }
 
 
-void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const double* state, double time) const {
+void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const double* state, double time, double* userData) const {
   // find times bounds
   int bounds[2];
   FindInterval(bounds, times, time, num_spline_points);
@@ -126,7 +126,7 @@ void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const do
   // call nominal policy
   if(state){  
     
-    task->GetNominalAction(model,action, plan_kin_data, time);
+    task->GetNominalPlanAction(model,action, plan_kin_data, time,userData);
   }
 
 

@@ -1,11 +1,13 @@
 <mujoco model="Exo">
-  <include file="ExoPD_hfield.xml" />
+  <include file="ExoPD.xml" />
       <keyframe>
-      <key name="home" qpos="-0.1227    0.1525    0.9352    0.9914    0.0166    0.1300    0.0012    0.0584   -0.0446   -0.3071    0.2148   -0.1642   -0.1277   -0.1346    0.0344   -0.4929    0.2830   -0.0461    0.1192" 
-      qvel="0.1666   -0.4778    0.1095    0.3401    0.3672   -0.2770    0.1365    0.2581   -0.0797   -0.0995   -0.0589    0.1830    0.1788    0.2847   -0.3850    0.2678   -0.6886   -0.1095" />
+       <key name="home" qpos="-0.1227    0.1525    0.9352    0.9914    0.0166    0.1300    0.0012    0.0584   -0.0446   -0.3071    0.2148   -0.1642   -0.1277   -0.1346    0.0344   -0.4929    0.2830   -0.0461    0.1192" 
+      qvel="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" />
+      <!-- <key name="home" qpos="-0.1227    0.1525    0.9352    0.9914    0.0166    0.1300    0.0012    0.0584   -0.0446   -0.3071    0.2148   -0.1642   -0.1277   -0.1346    0.0344   -0.4929    0.2830   -0.0461    0.1192" 
+      qvel="0.1666   -0.4778    0.1095    0.3401    0.3672   -0.2770    0.1365    0.2581   -0.0797   -0.0995   -0.0589    0.1830    0.1788    0.2847   -0.3850    0.2678   -0.6886   -0.1095" /> -->
    </keyframe>
    
-  <size memory="16M" nuserdata="2"/>
+  <size memory="1M" nuserdata="2"/>
   <!-- <size nuserdata="2"/> -->
 
     <actuator>
@@ -68,7 +70,7 @@
     <numeric name="agent_timestep" data="0.01" />
     <numeric name="sampling_spline_points" data="2 2 20" />
     <numeric name="sampling_exploration" data="0.001" />
-    <numeric name="sampling_trajectories" data="35" />
+    <numeric name="sampling_trajectories" data="1" />
     <numeric name="gradient_spline_points" data="5" />
     <numeric name="std_min" data="0.000001 0.000001 0.01" />
   </custom>

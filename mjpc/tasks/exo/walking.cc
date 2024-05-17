@@ -14,29 +14,36 @@ namespace mjpc::exo {
 
 using namespace Exo_t;
 
+
+void walking::GetNominalPlanAction(const mjModel* model, double* action,mjData* kin_data, double time,double* userData) const {
+       //instead of use the qpos from state, use the qpos from evaluate jt bezier
+    // int numCycle = static_cast<int>((time) / walkStepDur);
+
+    int curStance = userData[0];
+    
+    double phaseVar = (time - userData[1])/walkStepDur;
+    
+    std::cout << "nomianl plan action " << phaseVar << " " << curStance << " " << time << " " << userData[1] << " " << walkStepDur << std::endl;
+   convertAction(phaseVar,curStance,action,model,kin_data);
+
+}
+
 void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin_data,double time) const {
                               // std::cout << "Getting default Walkinging pos" << std::endl;
 
 
      //instead of use the qpos from state, use the qpos from evaluate jt bezier
-    int numCycle = static_cast<int>((time-initial_t0) / walkStepDur);
-
     int curStance = whichStance;
-    // if(numCycle > 0){
-    //   switch (whichStance){
-    //     case Left:{
-    //       curStance = Right;
-    //       break;
-    //     }
-    //     case Right:{
-    //       curStance = Left;
-    //       break;
-    //     }
-    //   }
-    // }
+    
+    double phaseVar = (time - initial_t0)/walkStepDur;
+    
+   convertAction(phaseVar,curStance,action,model,kin_data);
+}
 
-    vector_t q_init,dq_init;
-    std::tie(q_init,dq_init) = walking::evalJtBezier(time-initial_t0 - numCycle * walkStepDur,coeff,coeff_remap,curStance, walkStepDur);
+
+void walking::convertAction(double phaseVar, int curStance, double* action,const mjModel* model,mjData* kin_data) const{
+  vector_t q_init,dq_init;
+    std::tie(q_init,dq_init) = walking::evalJtBezier(phaseVar,coeff,coeff_remap,curStance, walkStepDur);
 
     double scale[12] = {1.0};
     bool jt_space = false;
@@ -60,7 +67,7 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
 
         //loop through the first 12 element
         vector_t yd,dyd = vector_t::Zero(12);
-        std::tie(yd,dyd) = evalTaskBezier(time-initial_t0 - numCycle * walkStepDur,coeff_task,coeff_task_remap,curStance, walkStepDur);
+        std::tie(yd,dyd) = evalTaskBezier(phaseVar,coeff_task,coeff_task_remap,curStance, walkStepDur);
 
         // yd[2] = yd[2] - 0.005;
         yDesFull.segment(0,12) = yd;
@@ -73,7 +80,7 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
 
         Eigen::VectorXd err;
         bool success = false;
-        int maxIKIterations = 3;
+        int maxIKIterations = 10;
         double dampingFactor = 5e-3;
     
     
@@ -121,13 +128,6 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
             mj_integratePos(model, kin_data->qpos, kin_data->qvel, 1);
         }
   
-        // std::cout << "IK success: " << success << std::endl;
-        // std::cout << "IK error: " << err.norm() << std::endl;
-    // if(!success){
-    //     std::cout << "IK failed" << std::endl;
-    //     // std::terminate();
-    // }
-
         matrix_t J_output = J.block(0,0,12,18);
         vector_t dq_ik = J_output.transpose()*(J_output * J_output.transpose()).inverse() * dyd;
         // overide action with current qpos
@@ -139,9 +139,7 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
         action[i+12] = dq_ik[i+6];
         }
     }
-
 }
-
 
 std::string walking::XmlPath() const {
   return GetModelPath("exo/plan_task.xml");
@@ -460,6 +458,44 @@ void walking::ResidualFn::Residual(const mjModel* model, const mjData* data,
 
 
 
+}
+
+void walking::UpdateUserData(const mjModel* model, mjData* data) const{
+  //check grf
+    vector_t grf = vector_t::Zero(8);
+    for(int i=0; i< 8;i++){
+      grf[i] = *SensorByName(model, data, "opto" + std::to_string(i+1));
+    }
+    std::cout << "planning grf " << grf.transpose() << std::endl;
+
+    double left_grf = grf.segment(0,4).sum();
+    double right_grf = grf.segment(4,4).sum();
+
+
+    int curStance = data->userdata[0];
+    scalar_t curStancet0 = data->userdata[1];
+    switch (curStance){
+      case Left:{
+        if ((right_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= 1.0){
+          curStance = Right;
+          curStancet0 = data->time;
+          std::cout << "Planner Switch to Right" << std::endl;
+        }
+        break;
+      }
+      case Right:{
+        if ((left_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= 1.0){
+          curStance = Left;
+          curStancet0 = data->time;
+          std::cout << "Planner Switch to Left" << std::endl;
+        }
+        break;
+      }
+    }
+
+    data->userdata[0] = curStance;
+    data->userdata[1] = curStancet0;
+    std::cout << "planning userdata " << data->userdata[0] << " " << data->userdata[1] << std::endl;
 }
 
 

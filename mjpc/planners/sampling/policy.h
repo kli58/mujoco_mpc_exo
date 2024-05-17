@@ -45,7 +45,7 @@ class SamplingPolicy : public Policy {
   // set action from policy
   void Action(double* action, const double* state, double time) const override;
 
-  void Plan_Action(double* action, mjData* plan_kin_data, const double* state, double time) const;
+  void Plan_Action(double* action, mjData* plan_kin_data, const double* state, double time, double* userData) const;
   // copy policy
   void CopyFrom(const SamplingPolicy& policy, int horizon);
 

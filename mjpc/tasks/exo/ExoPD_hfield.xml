@@ -60,7 +60,7 @@
                 texuniform="true"/>
 
       <texture builtin="gradient" height="100" rgb1="1 1 1" rgb2="0 0 0" type="skybox" width="100"/>
-      <hfield name="hf1" size="5 5 0.01 .05" nrow="0" ncol="0" file="test.png"/>
+      <hfield name="hf1" size="5 5 0.1 1" nrow="0" ncol="0" file="test.png"/>
       <!-- <hfield name="hf1" size="5 5 .1 .1" nrow="12" ncol="10" elevation="
             0 0 0 0 0 0 0 0 0 0
             0 0 0 0 0 0 0 0 0 0
@@ -77,7 +77,7 @@
    </asset>
    
  <worldbody>
-      <geom name="plane" type="hfield" hfield="hf1" pos="0 0 -0.01" rgba="1 1 1 1" friction="1" conaffinity="15" condim="3" />
+      <geom name="plane" type="hfield" hfield="hf1" pos="0 0 -0.02" rgba="1 1 1 1" friction="1" conaffinity="15" condim="3" />
       <body name="torso" pos="0 0 1" >
          <inertial diaginertia="9.5847      9.8649     0.57127" mass="58.1608"
                    pos="-0.051479 -3.1138e-05     0.29084"/>
@@ -258,17 +258,17 @@
    </worldbody>
    <contact>
       <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="left_sole" geom2="plane"
-            margin="0.0015"/>
+            margin="0.002"/>
       <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="right_sole" geom2="plane"
-            margin="0.0015"/>
+            margin="0.002"/>
       <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="left_toe" geom2="plane"
-            margin="0.0015"/>
+            margin="0.002"/>
       <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="right_toe" geom2="plane"
-            margin="0.0015"/>
+            margin="0.002"/>
       <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="left_heel" geom2="plane"
-            margin="0.0015"/>
+            margin="0.002"/>
       <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="right_heel" geom2="plane"
-            margin="0.0015"/>
+            margin="0.002"/>
    </contact>
 
   

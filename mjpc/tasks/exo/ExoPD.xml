@@ -12,7 +12,7 @@
       </default>
 
       <default class="multi_mode_ankle_actuator">
-      <general biastype="affine" gainprm="4000 0 0 0 0 0 0 0 0 0" biasprm="0 -4000 -20 0 0 0 0 0 0 0"/>
+      <general biastype="affine" gainprm="3000 0 0 0 0 0 0 0 0 0" biasprm="0 -3000 -20 0 0 0 0 0 0 0"/>
       </default>
 
       <default class="vel_hip_actuator">

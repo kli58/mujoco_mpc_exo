@@ -335,12 +335,12 @@ void SamplingPlanner::Rollouts(int num_trajectory, int horizon,
       // policy
       auto sample_policy_i = [&candidate_policy = s.candidate_policy, &i, &kin_data_i = s.kin_data_[ThreadPool::WorkerId()]](
                                  double* action, const double* state,
-                                 double time) {
-        candidate_policy[i].Plan_Action(action, kin_data_i.get(),state, time);
+                                 double time, double* userdata) {
+        candidate_policy[i].Plan_Action(action, kin_data_i.get(),state, time, userdata);
       };
 
       // policy rollout
-      s.trajectory[i].Rollout(
+      s.trajectory[i].CustomRollout(
           sample_policy_i, task, model, s.data_[ThreadPool::WorkerId()].get(),
           state.data(), time, mocap.data(), userdata.data(), horizon);
     });

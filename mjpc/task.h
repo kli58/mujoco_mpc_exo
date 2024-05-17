@@ -126,7 +126,8 @@ class Task {
 
   //custom modification
   virtual void GetNominalAction(const mjModel* model, double* action,mjData* kin_data, double time) const {};
-
+  virtual void GetNominalPlanAction(const mjModel* model, double* action,mjData* kin_data, double time, double* userData) const {};
+  virtual void UpdateUserData(const mjModel* model, mjData* data) const {};
   // mode
   int mode;
 
