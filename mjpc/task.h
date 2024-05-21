@@ -125,8 +125,8 @@ class Task {
   virtual std::string XmlPath() const = 0;
 
   //custom modification
-  virtual void GetNominalAction(const mjModel* model, double* action,mjData* kin_data, double time) const {};
-  virtual void GetNominalPlanAction(const mjModel* model, double* action,mjData* kin_data, double time, double* userData) const {};
+  virtual void GetNominalAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time) const {};
+  virtual void GetNominalPlanAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time, double* userData) const {};
   virtual void UpdateUserData(const mjModel* model, mjData* data) const {};
   // mode
   int mode;
@@ -150,6 +150,8 @@ class Task {
   double step_dur;
   double initial_t0;
   int whichStance;
+  int action_dim;
+  double* action_bound;
 
   // residual parameters
   std::vector<double> parameters;

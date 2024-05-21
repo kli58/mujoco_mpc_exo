@@ -127,6 +127,12 @@ class CrossEntropyPlanner : public Planner {
   // number of elite samples
   int n_elite_;
 
+  // dimension of the action space
+  std::vector<UniqueMjData> kin_data_;
+  void ResizeKinMjData(const mjModel* model, int num_threads);
+  int action_dim_;
+  double* action_bound_;
+
   // improvement
   double improvement;
 

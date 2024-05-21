@@ -39,13 +39,21 @@ void SamplingPolicy::Allocate(const mjModel* model, const Task& task,
   this->kin_data = mj_makeData(model);
 
   // parameters
-  parameters.resize(model->nu * kMaxTrajectoryHorizon);
+  parameters.resize(task.action_dim * kMaxTrajectoryHorizon);
+
+  // task space action
+  task_space_action = new double[task.action_dim];
 
   // times
   times.resize(kMaxTrajectoryHorizon);
 
   // dimensions
-  num_parameters = model->nu * kMaxTrajectoryHorizon;
+  num_parameters = task.action_dim * kMaxTrajectoryHorizon;
+  std::cout << "num_parameters: " << num_parameters << std::endl;
+
+  // task space action
+  action_dim_ = task.action_dim;
+
 
   // spline points
   num_spline_points = GetNumberOrDefault(kMaxTrajectoryHorizon, model,
@@ -59,15 +67,18 @@ void SamplingPolicy::Allocate(const mjModel* model, const Task& task,
 // reset memory to zeros
 void SamplingPolicy::Reset(int horizon, const double* initial_repeated_action) {
   // parameters
-  if (initial_repeated_action != nullptr) {
-    for (int i = 0; i < num_spline_points; ++i) {
-      mju_copy(parameters.data() + i * model->nu, initial_repeated_action,
-               model->nu);
-    }
-  } else {
+  // if (initial_repeated_action != nullptr) {
+  //   for (int i = 0; i < num_spline_points; ++i) {
+  //     mju_copy(parameters.data() + i * action_dim_, initial_repeated_action,
+  //              action_dim_);
+  //   }
+  // } else {
+    //always set to zero to avoid conflict
     std::fill(parameters.begin(),
-              parameters.begin() + model->nu * num_spline_points, 0.0);
-  }
+              parameters.begin() + action_dim_* num_spline_points, 0.0);
+  // }
+
+  std::fill(task_space_action, task_space_action + action_dim_, 0.0);
   // policy parameter times
   std::fill(times.begin(), times.begin() + horizon, 0.0);
 }
@@ -78,31 +89,70 @@ void SamplingPolicy::Action(double* action, const double* state, double time) co
   int bounds[2];
   FindInterval(bounds, times, time, num_spline_points);
 
-  // ----- get action ----- //
+  // double* task_space_action = new double[action_dim_];
+  // std::cout << "bounds[0]: " << bounds[0] << " bounds[1]: " << bounds[1] << std::endl;
+  
+  //loop through parameters and print the values out 
+  // for(int i = 0; i < num_parameters; i++){
+  //   // std::cout << " parameters[" << i << "]: " << parameters[i];
+  // }
+  // std::cout << std::endl;
 
+  // ----- get action ----- //
   if (bounds[0] == bounds[1] ||
       representation == PolicyRepresentation::kZeroSpline) {
-    ZeroInterpolation(action, time, times, parameters.data(), model->nu,
+    ZeroInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                       num_spline_points);
   } else if (representation == PolicyRepresentation::kLinearSpline) {
-    LinearInterpolation(action, time, times, parameters.data(), model->nu,
+    LinearInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                         num_spline_points);
   } else if (representation == PolicyRepresentation::kCubicSpline) {
-    CubicInterpolation(action, time, times, parameters.data(), model->nu,
+    CubicInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                        num_spline_points);
   }
 
-  // call nominal policy
-  if(state){  
-    
-    task->GetNominalAction(model,action, kin_data, time);
-  }
+    for(int i = 0; i < action_dim_; i++){
+    if(std::isnan(task_space_action[i])){
+      std::cout << "Action task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
+      std::terminate();
+    }
+     }
 
+  // convert nominal task space action to joint space
+  task->GetNominalAction(model,action,task_space_action, kin_data, time);
 
+  // delete[] task_space_action;
   // Clamp controls
   Clamp(action, model->actuator_ctrlrange, model->nu);
 }
 
+
+void SamplingPolicy::TaskSpaceAction(double* task_action, const double* state, double time) const {
+  // find times bounds
+  int bounds[2];
+  FindInterval(bounds, times, time, num_spline_points);
+
+  // ----- get action ----- //
+  if (bounds[0] == bounds[1] ||
+      representation == PolicyRepresentation::kZeroSpline) {
+    ZeroInterpolation(task_action, time, times, parameters.data(), action_dim_,
+                      num_spline_points);
+  } else if (representation == PolicyRepresentation::kLinearSpline) {
+    LinearInterpolation(task_action, time, times, parameters.data(), action_dim_,
+                        num_spline_points);
+  } else if (representation == PolicyRepresentation::kCubicSpline) {
+    CubicInterpolation(task_action, time, times, parameters.data(), action_dim_,
+                       num_spline_points);
+  }
+
+    for(int i = 0; i < action_dim_; i++){
+    if(std::isnan(task_space_action[i])){
+      std::cout << "TaskSpaceAction task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
+      std::terminate();
+    }
+  }
+
+}
 
 void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const double* state, double time, double* userData) const {
   // find times bounds
@@ -110,28 +160,41 @@ void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const do
   FindInterval(bounds, times, time, num_spline_points);
 
   // ----- get action ----- //
-
+  // double* task_space_action = new double[action_dim_];
+  // std::cout << "Plan bounds[0]: " << bounds[0] << " bounds[1]: " << bounds[1] << std::endl;
+  // std::cout << "parameters.data() " << parameters.data() << std::endl;
   if (bounds[0] == bounds[1] ||
       representation == PolicyRepresentation::kZeroSpline) {
-    ZeroInterpolation(action, time, times, parameters.data(), model->nu,
+    ZeroInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                       num_spline_points);
   } else if (representation == PolicyRepresentation::kLinearSpline) {
-    LinearInterpolation(action, time, times, parameters.data(), model->nu,
+    LinearInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                         num_spline_points);
   } else if (representation == PolicyRepresentation::kCubicSpline) {
-    CubicInterpolation(action, time, times, parameters.data(), model->nu,
+    CubicInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                        num_spline_points);
   }
+  
+  //check if task space action is nan
+    for(int i = 0; i < action_dim_; i++){
+    if(std::isnan(task_space_action[i])){
+      std::cout << "Plan_Action task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
+      
+      std::terminate();
+    }
+    }
 
-  // call nominal policy
-  if(state){  
-    
-    task->GetNominalPlanAction(model,action, plan_kin_data, time,userData);
-  }
+  Clamp(task_space_action, task->action_bound, action_dim_);
+
+
+
+  // convert task space action to joint space
+  task->GetNominalPlanAction(model,action,task_space_action, plan_kin_data, time,userData);
 
 
   // Clamp controls
   Clamp(action, model->actuator_ctrlrange, model->nu);
+  // delete[] task_space_action;
 }
 
 
@@ -149,7 +212,7 @@ void SamplingPolicy::CopyParametersFrom(
     const std::vector<double>& src_parameters,
     const std::vector<double>& src_times) {
   mju_copy(parameters.data(), src_parameters.data(),
-           num_spline_points * model->nu);
+           num_spline_points * action_dim_);
   mju_copy(times.data(), src_times.data(), num_spline_points);
 }
 

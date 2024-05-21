@@ -54,12 +54,17 @@ class SamplingPolicy : public Policy {
                           const std::vector<double>& src_times);
 
 
+
   // ----- members ----- //
   const mjModel* model;
   std::vector<double> parameters;
   std::vector<double> times;
   const Task* task;
   mjData* kin_data;
+  int action_dim_;
+  double* task_space_action;
+  void TaskSpaceAction(double* task_action, const double* state, double time) const;
+
   int num_parameters;
   int num_spline_points;
   PolicyRepresentation representation;

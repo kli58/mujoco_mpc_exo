@@ -37,14 +37,20 @@ namespace mju = ::mujoco::util_mjpc;
 void SamplingPlanner::Initialize(mjModel* model, const Task& task) {
   // delete mjData instances since model might have changed.
   data_.clear();
+  kin_data_.clear();
   // allocate one mjData for nominal.
   ResizeMjData(model, 1);
+  ResizeKinMjData(model, 1);
 
   // model
   this->model = model;
 
   // task
   this->task = &task;
+
+  // action space dim
+  action_dim_ = task.action_dim;
+  action_bound_ = task.action_bound;
 
   // sampling noise
   noise_exploration = GetNumberOrDefault(0.01, model, "sampling_exploration");
@@ -71,7 +77,7 @@ void SamplingPlanner::Allocate() {
   userdata.resize(model->nuserdata);
 
   // policy
-  int num_max_parameter = model->nu * kMaxTrajectoryHorizon;
+  int num_max_parameter = action_dim_ * kMaxTrajectoryHorizon;
   policy.Allocate(model, *task, kMaxTrajectoryHorizon);
   previous_policy.Allocate(model, *task, kMaxTrajectoryHorizon);
 
@@ -80,7 +86,7 @@ void SamplingPlanner::Allocate() {
   times_scratch.resize(kMaxTrajectoryHorizon);
 
   // noise
-  noise.resize(kMaxTrajectory * (model->nu * kMaxTrajectoryHorizon));
+  noise.resize(kMaxTrajectory * (action_dim_ * kMaxTrajectoryHorizon));
 
   // trajectory and parameters
   winner = -1;
@@ -119,7 +125,7 @@ void SamplingPlanner::Reset(int horizon,
     candidate_policy[i].Reset(horizon, initial_repeated_action);
   }
 
-  for (const auto& d : data_) {
+  for (const auto& d : data_) {// this essentially should not be doing anything
     if (initial_repeated_action) {
       mju_copy(d->ctrl, initial_repeated_action, model->nu);
     } else {
@@ -214,13 +220,13 @@ void SamplingPlanner::OptimizePolicy(int horizon, ThreadPool& pool) {
 // compute trajectory using nominal policy
 void SamplingPlanner::NominalTrajectory(int horizon, ThreadPool& pool) {
   // set policy
-  auto nominal_policy = [&cp = candidate_policy[0]](
-                            double* action, const double* state, double time) {
-    cp.Action(action, state, time);
+  auto nominal_policy = [&cp = candidate_policy[0],&kin_data_i = kin_data_[0]](
+                            double* action, const double* state, double time, double* userdata) {
+    cp.Plan_Action(action, kin_data_i.get(),state, time, userdata);
   };
 
   // rollout nominal policy
-  trajectory[0].Rollout(nominal_policy, task, model, data_[0].get(),
+  trajectory[0].CustomRollout(nominal_policy, task, model, data_[0].get(),
                         state.data(), time, mocap.data(), userdata.data(),
                         horizon);
 }
@@ -249,7 +255,7 @@ void SamplingPlanner::UpdateNominalPolicy(int horizon) {
   // get spline points
   for (int t = 0; t < num_spline_points; t++) {
     times_scratch[t] = nominal_time;
-    candidate_policy[winner].Action(DataAt(parameters_scratch, t * model->nu),
+    candidate_policy[winner].TaskSpaceAction(DataAt(parameters_scratch, t * model->nu),
                                nullptr, nominal_time);
     nominal_time += time_shift;
   }
@@ -278,14 +284,14 @@ void SamplingPlanner::AddNoiseToPolicy(int i) {
   absl::BitGen gen_;
 
   // shift index
-  int shift = i * (model->nu * kMaxTrajectoryHorizon);
+  int shift = i * (action_dim_ * kMaxTrajectoryHorizon);
 
   // sample noise
   for (int t = 0; t < num_spline_points; t++) {
-    for (int k = 0; k < model->nu; k++) {
-      double scale = 0.5 * (model->actuator_ctrlrange[2 * k + 1] -
-                            model->actuator_ctrlrange[2 * k]);
-      noise[shift + t * model->nu + k] =
+    for (int k = 0; k < action_dim_; k++) {
+      double scale = 0.5 * (action_bound_[2 * k + 1] -
+                            action_bound_[2 * k]);
+      noise[shift + t * action_dim_ + k] =
           absl::Gaussian<double>(gen_, 0.0, scale * noise_exploration);
     }
   }
@@ -296,8 +302,8 @@ void SamplingPlanner::AddNoiseToPolicy(int i) {
 
   // clamp parameters
   for (int t = 0; t < num_spline_points; t++) {
-    Clamp(DataAt(candidate_policy[i].parameters, t * model->nu),
-          model->actuator_ctrlrange, model->nu);
+    Clamp(DataAt(candidate_policy[i].parameters, t * action_dim_),
+          action_bound_, action_dim_);
   }
 
   // end timer
@@ -310,7 +316,7 @@ void SamplingPlanner::Rollouts(int num_trajectory, int horizon,
   // reset noise compute time
   noise_compute_time = 0.0;
 
-  policy.num_parameters = model->nu * policy.num_spline_points;
+  policy.num_parameters = action_dim_ * policy.num_spline_points;
 
   // random search
   int count_before = pool.GetCount();

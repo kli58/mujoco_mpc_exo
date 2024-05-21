@@ -56,9 +56,9 @@ class walking : public Task {
   walking() : residual_(this) {loadGoalJtPosition();};
   std::vector<double> des;
   
-  void convertAction(double phaseVar, int curStance,double* action, const mjModel* model,mjData* kin_data) const;
-  void GetNominalPlanAction(const mjModel* model, double* action,mjData* kin_data, double time,double* userData) const override;
-  void GetNominalAction(const mjModel* model, double* action,mjData* kin_data, double time) const override;
+  void convertAction(double phaseVar, int curStance,double* action, double* task_space_action, const mjModel* model,mjData* kin_data) const;
+  void GetNominalPlanAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time,double* userData) const override;
+  void GetNominalAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time) const override;
   void UpdateUserData(const mjModel* model, mjData* data) const override;
   std::string Name() const override;
   std::string XmlPath() const override;

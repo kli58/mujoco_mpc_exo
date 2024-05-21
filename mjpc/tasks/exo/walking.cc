@@ -15,7 +15,7 @@ namespace mjpc::exo {
 using namespace Exo_t;
 
 
-void walking::GetNominalPlanAction(const mjModel* model, double* action,mjData* kin_data, double time,double* userData) const {
+void walking::GetNominalPlanAction(const mjModel* model, double* action, double* task_space_action, mjData* kin_data, double time,double* userData) const {
        //instead of use the qpos from state, use the qpos from evaluate jt bezier
     // int numCycle = static_cast<int>((time) / walkStepDur);
 
@@ -23,12 +23,13 @@ void walking::GetNominalPlanAction(const mjModel* model, double* action,mjData* 
     
     double phaseVar = (time - userData[1])/walkStepDur;
     
-    std::cout << "nomianl plan action " << phaseVar << " " << curStance << " " << time << " " << userData[1] << " " << walkStepDur << std::endl;
-   convertAction(phaseVar,curStance,action,model,kin_data);
+    phaseVar = std::min(1.0, std::max(0.0, phaseVar));
+  //  std::cout << "nomianl plan action " << phaseVar << " " << curStance << " " << time << " " << userData[1] << " " << walkStepDur << std::endl;
+   convertAction(phaseVar,curStance,action,task_space_action,model,kin_data);
 
 }
 
-void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin_data,double time) const {
+void walking::GetNominalAction(const mjModel* model, double* action, double* task_space_action, mjData* kin_data,double time) const {
                               // std::cout << "Getting default Walkinging pos" << std::endl;
 
 
@@ -36,12 +37,12 @@ void walking::GetNominalAction(const mjModel* model, double* action, mjData* kin
     int curStance = whichStance;
     
     double phaseVar = (time - initial_t0)/walkStepDur;
-    
-   convertAction(phaseVar,curStance,action,model,kin_data);
+    phaseVar = std::min(1.0, std::max(0.0, phaseVar));
+   convertAction(phaseVar,curStance,action,task_space_action, model,kin_data);
 }
 
 
-void walking::convertAction(double phaseVar, int curStance, double* action,const mjModel* model,mjData* kin_data) const{
+void walking::convertAction(double phaseVar, int curStance, double* action, double* task_space_action, const mjModel* model,mjData* kin_data) const{
   vector_t q_init,dq_init;
     std::tie(q_init,dq_init) = walking::evalJtBezier(phaseVar,coeff,coeff_remap,curStance, walkStepDur);
 
@@ -49,11 +50,11 @@ void walking::convertAction(double phaseVar, int curStance, double* action,const
     bool jt_space = false;
     if(jt_space){
         for (int i = 0; i < 12; i++) {
-            action[i] = scale[i] *action[i] + q_init[i+7];
+            action[i] = scale[i] *task_space_action[i] + q_init[i+7];
         }
 
         for(int i=0; i<12;i++){
-            action[i+12] = scale[i] *action[i+12] + dq_init[i+6];
+            action[i+12] = scale[i] *task_space_action[i+12] + dq_init[i+6];
         }
     }
     else{
@@ -73,10 +74,51 @@ void walking::convertAction(double phaseVar, int curStance, double* action,const
         yDesFull.segment(0,12) = yd;
         dyd.segment(0,12) = dyd;
     
-        for(int i=0; i<12;i++){
-            yDesFull[i] = yd[i] + scale[i]*action[i];
-            dyd[i] = dyd[i] + scale[i]*action[i+12];
+        // for(int i=0; i<12;i++){
+        //     yDesFull[i] = yd[i] + scale[i]*action[i];
+        //     dyd[i] = dyd[i] + scale[i]*action[i+12];
+        // }
+        // std::cout << "yd: " << yd.transpose() << std::endl;
+        // std::cout << "dyd: " << dyd.transpose() << std::endl;
+        //loop through action dim and print out task space_action
+        // std::cout << "task_space_action: ";
+        // for(int i=0; i<action_dim;i++){
+        //     std::cout << task_space_action[i] << " ";
+        // }
+        // std::cout << std::endl;
+
+        // check is task spac is nan
+        for(int i=0; i<action_dim;i++){
+            if(std::isnan(task_space_action[i])){
+                std::cout << "task space action is nan" << std::endl;
+                std::terminate();
+            }
         }
+
+        switch(action_dim){
+          case 24:{
+            for(int i=0; i<12;i++){
+                yDesFull[i] = yd[i] + scale[i]*task_space_action[i];
+                dyd[i] = dyd[i] + scale[i]*task_space_action[i+12];
+            }
+            break;
+            std::cout <<"24 dim" << std::endl;
+          }
+
+          case 3:{ //think about velocity; 
+            for(int i=0; i<3;i++){
+                yDesFull[i] = yd[i] + scale[i]*task_space_action[i];
+                //bounded the value based on action bound, order is lb_0,ub_0, lb_1, ub_1
+                // yDesFull[i] = fmin(fmax(yDesFull[i],action_bound[i*2]),action_bound[i*2+1]);
+            }
+            yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
+		        yDesFull[1] = fmax(fmin(0.25, yDesFull[1]), -0.25);
+            yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.84);
+            break;
+            
+          }
+        }
+
 
         Eigen::VectorXd err;
         bool success = false;
@@ -105,7 +147,7 @@ void walking::convertAction(double phaseVar, int curStance, double* action,const
             mj_comPos(model, kin_data);
 
 
-            taskspace_utils::getY(yCur,model,kin_data, whichStance);
+            taskspace_utils::getY(yCur,model,kin_data, curStance);
 
             err = yDesFull - yCur;
             if (err.cwiseAbs().maxCoeff() < 1e-3) {
@@ -114,7 +156,7 @@ void walking::convertAction(double phaseVar, int curStance, double* action,const
                 break;
             }
 
-            taskspace_utils::getJacobian(J,model,kin_data, whichStance);
+            taskspace_utils::getJacobian(J,model,kin_data, curStance);
             Eigen::MatrixXd JJt = J * J.transpose() + Eigen::MatrixXd::Identity(J.rows(), J.rows()) * dampingFactor;
             Eigen::MatrixXd J_pinv = J.completeOrthogonalDecomposition().pseudoInverse(); // Compute the pseudo-inverse using COD
             Eigen::VectorXd deltaQ = J_pinv * err; // Directly use the pseudo-inverse to compute deltaQ
@@ -127,6 +169,13 @@ void walking::convertAction(double phaseVar, int curStance, double* action,const
 
             mj_integratePos(model, kin_data->qpos, kin_data->qvel, 1);
         }
+
+        if (!success) {
+            std::cout << "IK did not converge" << std::endl;
+            std::cout << "IK yd: " << yd.transpose() << std::endl;
+            // std::cout << "terminate at " << err.transpose() << std::endl;
+            // std::terminate();
+        }
   
         matrix_t J_output = J.block(0,0,12,18);
         vector_t dq_ik = J_output.transpose()*(J_output * J_output.transpose()).inverse() * dyd;
@@ -136,7 +185,8 @@ void walking::convertAction(double phaseVar, int curStance, double* action,const
         }
 
         for(int i=0; i<12;i++){
-        action[i+12] = dq_ik[i+6];
+        // action[i+12] = dq_ik[i+6];
+        action[i+12] = dq_init[i+6];
         }
     }
 }
@@ -179,18 +229,24 @@ void walking::ResidualFn::loadGoalJtPosition(){
 }
 
 void walking::loadGoalJtPosition(){
-    std::string FilePath = GetModelPath("exo/walkConfig.yaml");
+  std::string FilePath = GetModelPath("exo/walkConfig.yaml");
 	YAML::Node config = YAML::LoadFile(FilePath);
 
+  // load sampler param
+  action_dim = config["action_dim"].as<int>();
+  action_bound = new double[action_dim];
+  for(int i=0; i<action_dim;i++){
+    action_bound[i] = config["action_bound"][i].as<double>();
+  }
 	// Read coefficients from yaml
 	std::vector<scalar_t> coeff_jt_vec = config["coeff_jt"].as<std::vector<scalar_t>>();
 	std::vector<scalar_t> coeff_b_vec = config["coeff_b"].as<std::vector<scalar_t>>();
-    std::vector<scalar_t> coeff_task_vec = config["coeff_output"].as<std::vector<scalar_t>>();
+  std::vector<scalar_t> coeff_task_vec = config["coeff_output"].as<std::vector<scalar_t>>();
   
   
 	walkStepDur = config["step_dur"].as<scalar_t>();
 	step_dur = walkStepDur;
-    whichStance = Right;
+  whichStance = Right;
 	// Get matrix of coefficients and remapped coefficients
 	int deg = 7;
 	coeff = coeffUtils::reshapeCoeff(deg, coeff_b_vec, coeff_jt_vec);
@@ -208,13 +264,13 @@ void walking::loadGoalJtPosition(){
 
 
 
-std::tuple<vector_t,vector_t> walking::evalJtBezier(double time,matrix_t coeff_, matrix_t coeff_remap_,int whichStance, scalar_t walkStepDur_) {
+std::tuple<vector_t,vector_t> walking::evalJtBezier(double time,matrix_t coeff_, matrix_t coeff_remap_,int stance, scalar_t walkStepDur_) {
 
   // Calculate the phase variable within the current cycle
   scalar_t phaseVar = (time) / walkStepDur_;
 
 	matrix_t coeff_cur = matrix_t::Zero(18,8);
-	switch(whichStance){
+	switch(stance){
 		case Left:{//left stance; frost assume right stance so need to use the remap coefficient
 			coeff_cur  = coeff_remap_; 
             // std::cout  << "left stance" << std::endl;
@@ -244,7 +300,7 @@ std::tuple<vector_t,vector_t> walking::evalJtBezier(double time,matrix_t coeff_,
   return std::tie(q_des,dq_des);
 }
 
-std::tuple<vector_t,vector_t> walking::evalTaskBezier(double time,matrix_t coeff_, matrix_t coeff_remap_,int whichStance, scalar_t walkStepDur_){
+std::tuple<vector_t,vector_t> walking::evalTaskBezier(double time,matrix_t coeff_, matrix_t coeff_remap_,int stance, scalar_t walkStepDur_){
   // Get the phase variable
 
     // Calculate the number of complete cycles
@@ -255,7 +311,7 @@ std::tuple<vector_t,vector_t> walking::evalTaskBezier(double time,matrix_t coeff
 
 
 	matrix_t coeff_cur = matrix_t::Zero(12,8);
-	switch(whichStance){
+	switch(stance){
 		case Left:{//left stance; frost assume right stance so need to use the remap coefficient
 			coeff_cur  = coeff_remap_; 
             // std::cout  << "left stance" << std::endl;
@@ -340,7 +396,7 @@ void walking::evalActualTaskSpaceState(Exo_t::vector_t& y_act,Exo_t::vector_t& y
   vector_t swing_foot_pos = vector_t::Zero(3);
   vector_t swing_foot_ori = vector_t::Zero(3);
 
-  switch(whichStance){
+  switch(int(data->userdata[0])){
     case Left:{
       // get stance and swing foot pos
       swing_foot_pos << foot_right[0], foot_right[1],foot_right[2];
@@ -381,12 +437,12 @@ void walking::ResidualFn::Residual(const mjModel* model, const mjData* data,
 
   
      // Calculate the number of complete cycles
-    int whichStance = data->userdata[0];
+    int stance = data->userdata[0];
     double initial_t0 = static_cast<double>(data->userdata[1]);
     double current_time = data->time - initial_t0;
     //  scalar_t phaseVar = (data->time - initial_t0) / walkStepDur;  
     vector_t q_des,dq_des;
-    std::tie(q_des,dq_des) = walking::evalJtBezier(current_time,coeff,coeff_remap,whichStance,walkStepDur);
+    std::tie(q_des,dq_des) = walking::evalJtBezier(current_time,coeff,coeff_remap,stance,walkStepDur);
 
 
 
@@ -402,14 +458,14 @@ void walking::ResidualFn::Residual(const mjModel* model, const mjData* data,
 
     //get desired task space trajectory
     vector_t y_des,dy_des;
-    std::tie(y_des,dy_des) = walking::evalTaskBezier(current_time,coeff_task,coeff_task_remap,whichStance,walkStepDur);
+    std::tie(y_des,dy_des) = walking::evalTaskBezier(current_time,coeff_task,coeff_task_remap,stance,walkStepDur);
 
     //get actual task space trajectory, calculate holonomic constraint violation --> velocity
     vector_t y_act = vector_t::Zero(12);
     vector_t dy_act = vector_t::Zero(12);
     vector_t y_h = vector_t::Zero(6);
     //eval com2st, pelv_ori, sw_ft, sw_ft_ori
-    walking::evalActualTaskSpaceState(y_act,y_h,dy_act,model,data,whichStance);
+    walking::evalActualTaskSpaceState(y_act,y_h,dy_act,model,data,stance);
 
     //update residual task space
     for(int i=0; i< 12;i++){
@@ -466,7 +522,7 @@ void walking::UpdateUserData(const mjModel* model, mjData* data) const{
     for(int i=0; i< 8;i++){
       grf[i] = *SensorByName(model, data, "opto" + std::to_string(i+1));
     }
-    std::cout << "planning grf " << grf.transpose() << std::endl;
+    // std::cout << "planning grf " << grf.transpose() << std::endl;
 
     double left_grf = grf.segment(0,4).sum();
     double right_grf = grf.segment(4,4).sum();
@@ -479,7 +535,7 @@ void walking::UpdateUserData(const mjModel* model, mjData* data) const{
         if ((right_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= 1.0){
           curStance = Right;
           curStancet0 = data->time;
-          std::cout << "Planner Switch to Right" << std::endl;
+          // std::cout << "Planner Switch to Right" << std::endl;
         }
         break;
       }
@@ -487,7 +543,7 @@ void walking::UpdateUserData(const mjModel* model, mjData* data) const{
         if ((left_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= 1.0){
           curStance = Left;
           curStancet0 = data->time;
-          std::cout << "Planner Switch to Left" << std::endl;
+          // std::cout << "Planner Switch to Left" << std::endl;
         }
         break;
       }
@@ -495,7 +551,7 @@ void walking::UpdateUserData(const mjModel* model, mjData* data) const{
 
     data->userdata[0] = curStance;
     data->userdata[1] = curStancet0;
-    std::cout << "planning userdata " << data->userdata[0] << " " << data->userdata[1] << std::endl;
+    std::cout << "update planning userdata " << data->userdata[0] << " " << data->userdata[1] << std::endl;
 }
 
 

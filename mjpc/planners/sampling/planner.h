@@ -121,6 +121,8 @@ class SamplingPlanner : public RankedPlanner {
   //kinematics data
   std::vector<UniqueMjData> kin_data_;
   void ResizeKinMjData(const mjModel* model, int num_threads);
+  int action_dim_;
+  double* action_bound_;
 
   // policy
   SamplingPolicy policy;  // (Guarded by mtx_)
