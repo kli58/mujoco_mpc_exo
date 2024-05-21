@@ -105,7 +105,7 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
             std::cout <<"24 dim" << std::endl;
           }
 
-          case 3:{ //think about velocity; 
+          case 3:{ //com position only
             for(int i=0; i<3;i++){
                 yDesFull[i] = yd[i] + scale[i]*task_space_action[i];
                 //bounded the value based on action bound, order is lb_0,ub_0, lb_1, ub_1
@@ -116,6 +116,20 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
             yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.84);
             break;
             
+          }
+          
+          case 12:{ //order of task_space_action com position swing position and com vel swing vel;
+            for(int i=0; i<3;i++){
+                yDesFull[i] = yd[i] + scale[i]*task_space_action[i]; //com position
+                yDesFull[i+6] = yd[i+6] + scale[i+6]*task_space_action[i+3];//swing foot position
+                dyd[i] = dyd[i] + scale[i]*task_space_action[i+6]; //com vel
+                dyd[i+6] = dyd[i+6] + scale[i+6]*task_space_action[i+9];//swing foot vel
+            }
+           
+            yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
+		        yDesFull[1] = fmax(fmin(0.25, yDesFull[1]), -0.25);
+            yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.84);
+          break;
           }
         }
 
@@ -234,10 +248,40 @@ void walking::loadGoalJtPosition(){
 
   // load sampler param
   action_dim = config["action_dim"].as<int>();
-  action_bound = new double[action_dim];
-  for(int i=0; i<action_dim;i++){
-    action_bound[i] = config["action_bound"][i].as<double>();
+  action_bound = new double[action_dim*2];
+  std::vector<double> com_bound = config["com_bound"].as<std::vector<double>>();
+  std::vector<double> sw_ft_bound = config["sw_ft_bound"].as<std::vector<double>>();
+  
+  switch(action_dim){
+
+    case 3:{
+      
+      for(int i=0; i<action_dim;i++){
+        action_bound[2*i] = com_bound[2*i];
+        action_bound[2*i+1] = com_bound[2*i+1];
+      }
+      break;
+    }//com position only
+    case 12:{
+      
+      for(int i=0; i<3;i++){
+        action_bound[2*i] = com_bound[2*i];
+        action_bound[2*i+1] = com_bound[2*i+1];
+      }
+      for(int i=0; i<3;i++){
+        action_bound[2*i+6] = sw_ft_bound[2*i];
+        action_bound[2*i+7] = sw_ft_bound[2*i+1];
+      }
+      //velocity bound
+      for(int i=0; i<6;i++){
+        action_bound[2*i+12] = -1;
+        action_bound[2*i+13] = 1;
+      }
+      break;
+    }//com position and com vel; swing position and vel;
   }
+  
+ 
 	// Read coefficients from yaml
 	std::vector<scalar_t> coeff_jt_vec = config["coeff_jt"].as<std::vector<scalar_t>>();
 	std::vector<scalar_t> coeff_b_vec = config["coeff_b"].as<std::vector<scalar_t>>();
