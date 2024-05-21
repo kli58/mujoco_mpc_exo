@@ -106,6 +106,10 @@ class SamplingPlanner : public RankedPlanner {
   void ActionFromCandidatePolicy(double* action, int candidate,
                                  const double* state, double time) override;
 
+  void PlanActionFromCandidatePolicy(double* action, mjData* kin_data,int candidate,
+                                                const double* state,
+                                                double time, double* userdata);
+
   void CopyCandidateToPolicy(int candidate) override;
 
   // ----- members ----- //

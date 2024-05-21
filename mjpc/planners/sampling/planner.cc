@@ -496,6 +496,13 @@ void SamplingPlanner::ActionFromCandidatePolicy(double* action, int candidate,
   candidate_policy[trajectory_order[candidate]].Action(action, state, time);
 }
 
+
+void SamplingPlanner::PlanActionFromCandidatePolicy(double* action, mjData* kin_data,int candidate,
+                                                const double* state,
+                                                double time, double* userdata) {
+  candidate_policy[trajectory_order[candidate]].Plan_Action(action, kin_data, state, time, userdata);
+}
+
 void SamplingPlanner::CopyCandidateToPolicy(int candidate) {
   // set winner
   winner = trajectory_order[candidate];

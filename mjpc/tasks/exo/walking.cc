@@ -244,13 +244,20 @@ void walking::ResidualFn::loadGoalJtPosition(){
 
 void walking::loadGoalJtPosition(){
   std::string FilePath = GetModelPath("exo/walkConfig.yaml");
+	std::string TaskSpeification = GetModelPath("exo/task_specification.yaml");
 	YAML::Node config = YAML::LoadFile(FilePath);
+  YAML::Node task_spec = YAML::LoadFile(TaskSpeification);
+  
+  //load perturbation and sampler param
+  xfrc_rate = task_spec["xfrc_rate"].as<double>();
+  xfrc_std = task_spec["xfrc_std"].as<double>();
+  xfrc_mean = task_spec["xfrc_mean"].as<double>();
+  perturb_body = task_spec["perturb_body"].as<std::vector<double>>();
 
-  // load sampler param
-  action_dim = config["action_dim"].as<int>();
+  action_dim = task_spec["action_dim"].as<int>();
   action_bound = new double[action_dim*2];
-  std::vector<double> com_bound = config["com_bound"].as<std::vector<double>>();
-  std::vector<double> sw_ft_bound = config["sw_ft_bound"].as<std::vector<double>>();
+  std::vector<double> com_bound = task_spec["com_bound"].as<std::vector<double>>();
+  std::vector<double> sw_ft_bound = task_spec["sw_ft_bound"].as<std::vector<double>>();
   
   switch(action_dim){
 
@@ -595,7 +602,7 @@ void walking::UpdateUserData(const mjModel* model, mjData* data) const{
 
     data->userdata[0] = curStance;
     data->userdata[1] = curStancet0;
-    std::cout << "update planning userdata " << data->userdata[0] << " " << data->userdata[1] << std::endl;
+    // std::cout << "update planning userdata " << data->userdata[0] << " " << data->userdata[1] << std::endl;
 }
 
 

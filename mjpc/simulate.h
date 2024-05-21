@@ -23,7 +23,8 @@
 #include <ratio>
 #include <thread>
 #include <vector>
-
+#include <absl/random/distributions.h>
+#include <absl/random/random.h>
 #include <mujoco/mujoco.h>
 #include <platform_ui_adapter.h>
 #include "mjpc/agent.h"
@@ -81,6 +82,8 @@ class MJSIMULATEAPI Simulate {
 
   // loop to render the UI (must be called from main thread because of MacOS)
   void RenderLoop();
+
+  void ApplyTaskPerturbations();
 
   static constexpr int kMaxFilenameLength = 1000;
 

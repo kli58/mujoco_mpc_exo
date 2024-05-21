@@ -32,7 +32,8 @@
            timestep="0.001"/>
    <visual>
       <headlight ambient="0.5         0.5         0.5"/>
-      <map force="0.005"/>
+      <map force="0.5"/>
+      <scale forcewidth="0.1"/>
       <rgba contactforce="0.7 0.9 0.9 0.5"/>
    </visual>
 

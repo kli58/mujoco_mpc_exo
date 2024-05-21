@@ -147,24 +147,30 @@ void Trajectory::CustomNoisyRollout(
   times[0] = time;
   data->time = time;
 
-  std::cout << "start from userdata: " << userdata[0] << " " << userdata[1] << std::endl;
+  // std::cout << "start from userdata: " << userdata[0] << " " << userdata[1] << std::endl;
 
   absl::BitGen gen;
-
+ 
   for (int t = 0; t < horizon - 1; t++) {
     // set action
     policy(DataAt(actions, t * nu), DataAt(states, t * dim_state), data->time, data->userdata);
     mju_copy(data->ctrl, DataAt(actions, t * nu), nu);
-
+    mju_zero(data->xfrc_applied, 6 * model->nbody);
     // apply perturbation
-    if (xfrc_std > 0) {
+    if (xfrc_std > 0 && !task->perturb_body.empty()) {
+      
       // convert rate and scale to discrete time (Ornstein–Uhlenbeck)
-      mjtNum rate = mju_exp(-model->opt.timestep / xfrc_rate);
-      mjtNum scale = xfrc_std * mju_sqrt(1 - rate * rate);
-      for (int i = 0; i < 6*model->nbody; i++) {
-        data->xfrc_applied[i] = rate * data->xfrc_applied[i] +
-                                absl::Gaussian<mjtNum>(gen, 0, scale);
+      // mjtNum rate = mju_exp(-model->opt.timestep / xfrc_rate);
+      // mjtNum scale = xfrc_std * mju_sqrt(1 - rate * rate);
+
+      for(int j=0; j < task->perturb_body.size(); j++){
+        int body_id = task->perturb_body[j];
+        for (int i = 0; i < 6; i++) {
+          data->xfrc_applied[6*body_id + i] = 
+                                  task->xfrc_mean*absl::Gaussian<mjtNum>(gen, 0, task->xfrc_std);
+        }
       }
+     
     }
 
     // step

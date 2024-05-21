@@ -152,6 +152,10 @@ class Task {
   int whichStance;
   int action_dim;
   double* action_bound;
+  double xfrc_std;
+  double xfrc_rate;
+  double xfrc_mean;
+  std::vector<double> perturb_body;
 
   // residual parameters
   std::vector<double> parameters;

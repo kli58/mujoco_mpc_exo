@@ -283,9 +283,9 @@ void CrossEntropyPlanner::NominalTrajectory(int horizon) {
   };
 
   // rollout nominal policy
-  nominal_trajectory.CustomRollout(nominal_policy, task, model, data_[ThreadPool::WorkerId()].get(),
+  nominal_trajectory.CustomNoisyRollout(nominal_policy, task, model, data_[ThreadPool::WorkerId()].get(),
                         state.data(), time, mocap.data(), userdata.data(),
-                        horizon);
+                        task->xfrc_std,task->xfrc_rate,horizon);
 }
 void CrossEntropyPlanner::NominalTrajectory(int horizon, ThreadPool& pool) {
   NominalTrajectory(horizon);

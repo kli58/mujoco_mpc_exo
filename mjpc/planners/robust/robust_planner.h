@@ -71,6 +71,8 @@ class RobustPlanner : public Planner {
   double xfrc_std_ = 0.1;
   double xfrc_rate_ = 0.1;
 
+  std::vector<UniqueMjData> kin_data_;
+  void ResizeKinMjData(const mjModel* model, int num_threads);
   std::vector<Trajectory> trajectories_;
 
   // state

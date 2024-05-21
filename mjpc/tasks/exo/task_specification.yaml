@@ -1,0 +1,7 @@
+action_dim: 12
+com_bound: [-0.15,0.15,-0.2,0.2,0.8,0.9]
+sw_ft_bound: [-0.15,0.15,-0.35,0.35,0.0,0.1]
+xfrc_std: 1
+xfrc_mean: 20
+xfrc_rate: 1.0
+perturb_body: [7,13]

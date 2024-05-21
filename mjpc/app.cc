@@ -324,8 +324,11 @@ void PhysicsLoop(mj::Simulate& sim) {
 
             // clear old perturbations, apply new
             mju_zero(d->xfrc_applied, 6 * m->nbody);
+            sim.ApplyTaskPerturbations();
+
             sim.ApplyPosePerturbations(0);  // move mocap bodies only
             sim.ApplyForcePerturbations();
+             
 
             // run single step, let next iteration deal with timing
             sim.agent->ExecuteAllRunBeforeStepJobs(m, d);
@@ -350,9 +353,10 @@ void PhysicsLoop(mj::Simulate& sim) {
 
               // clear old perturbations, apply new
               mju_zero(d->xfrc_applied, 6 * m->nbody);
+             
               sim.ApplyPosePerturbations(0);  // move mocap bodies only
               sim.ApplyForcePerturbations();
-
+              sim.ApplyTaskPerturbations();
               // call mj_step
               sim.agent->ExecuteAllRunBeforeStepJobs(m, d);
               mj_step(m, d);
@@ -364,9 +368,10 @@ void PhysicsLoop(mj::Simulate& sim) {
             }
           }
         } else {  // paused
+
           // apply pose perturbation
           sim.ApplyPosePerturbations(1);  // move mocap and dynamic bodies
-
+          sim.ApplyTaskPerturbations();
           // still accept jobs when simulation is paused
           sim.agent->ExecuteAllRunBeforeStepJobs(m, d);
 
