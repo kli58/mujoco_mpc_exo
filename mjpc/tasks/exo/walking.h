@@ -21,7 +21,9 @@
 #include "mjpc/task.h"
 #include "mjpc/tasks/exo/Types.h"
 #include "mjpc/tasks/exo/bezier_tools.hpp"
-
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 namespace mjpc {
 namespace exo {
@@ -68,12 +70,15 @@ class walking : public Task {
   Exo_t::matrix_t coeff_remap;
   Exo_t::matrix_t coeff_task;
   Exo_t::matrix_t coeff_task_remap;
+  bool nominal_policy;
+  bool terminate_early;
+  std::vector<double> scale;
 
   mjData* kin_data;
   Exo_t::scalar_t walkStepDur;
   static std::tuple<Exo_t::vector_t,Exo_t::vector_t>  evalJtBezier(double time, Exo_t::matrix_t coeff_, Exo_t::matrix_t coeff_remap_,int whichStance,Exo_t::scalar_t walkStepDur_);
   static std::tuple<Exo_t::vector_t,Exo_t::vector_t>  evalTaskBezier(double time, Exo_t::matrix_t coeff_, Exo_t::matrix_t coeff_remap_,int whichStance,Exo_t::scalar_t walkStepDur_);
-  
+  std::ofstream fileHandle;
 
  protected:
   std::unique_ptr<mjpc::ResidualFn> ResidualLocked() const override {

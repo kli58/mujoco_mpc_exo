@@ -49,7 +49,7 @@ void SamplingPolicy::Allocate(const mjModel* model, const Task& task,
 
   // dimensions
   num_parameters = task.action_dim * kMaxTrajectoryHorizon;
-  std::cout << "num_parameters: " << num_parameters << std::endl;
+  // std::cout << "num_parameters: " << num_parameters << std::endl;
 
   // task space action
   action_dim_ = task.action_dim;

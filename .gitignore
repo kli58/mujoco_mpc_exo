@@ -33,3 +33,7 @@ MJDATA.TXT
 MJMODEL.TXT
 # Python
 python/dist/
+
+*.csv
+
+mjpc/tasks/exo/sim_data/

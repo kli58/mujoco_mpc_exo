@@ -162,15 +162,15 @@ void Trajectory::CustomNoisyRollout(
       // convert rate and scale to discrete time (Ornstein–Uhlenbeck)
       // mjtNum rate = mju_exp(-model->opt.timestep / xfrc_rate);
       // mjtNum scale = xfrc_std * mju_sqrt(1 - rate * rate);
-
-      for(int j=0; j < task->perturb_body.size(); j++){
-        int body_id = task->perturb_body[j];
-        for (int i = 0; i < 6; i++) {
-          data->xfrc_applied[6*body_id + i] = 
-                                  task->xfrc_mean*absl::Gaussian<mjtNum>(gen, 0, task->xfrc_std);
+        if(data->time - data->userdata[1] <0.1){
+            for(int j=0; j < task->perturb_body.size(); j++){
+              int body_id = task->perturb_body[j];
+              for (int i = 0; i < 6; i++) {
+                data->xfrc_applied[6*body_id + i] = 
+                                        task->xfrc_mean*absl::Gaussian<mjtNum>(gen, 0, task->xfrc_std);
+              }
+            }
         }
-      }
-     
     }
 
     // step

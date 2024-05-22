@@ -46,7 +46,6 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
   vector_t q_init,dq_init;
     std::tie(q_init,dq_init) = walking::evalJtBezier(phaseVar,coeff,coeff_remap,curStance, walkStepDur);
 
-    double scale[12] = {1.0};
     bool jt_space = false;
     if(jt_space){
         for (int i = 0; i < 12; i++) {
@@ -74,6 +73,7 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
         yDesFull.segment(0,12) = yd;
         dyd.segment(0,12) = dyd;
     
+
         // for(int i=0; i<12;i++){
         //     yDesFull[i] = yd[i] + scale[i]*action[i];
         //     dyd[i] = dyd[i] + scale[i]*action[i+12];
@@ -84,6 +84,12 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
         // std::cout << "task_space_action: ";
         // for(int i=0; i<action_dim;i++){
         //     std::cout << task_space_action[i] << " ";
+        // }
+        // std::cout << std::endl;
+        
+        // std::cout << "scale: ";
+        // for(int i=0; i<12;i++){
+        //     std::cout << scale[i] << " ";
         // }
         // std::cout << std::endl;
 
@@ -119,11 +125,14 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
           }
           
           case 12:{ //order of task_space_action com position swing position and com vel swing vel;
+          //loop through all scale and print them out
+          
+
             for(int i=0; i<3;i++){
                 yDesFull[i] = yd[i] + scale[i]*task_space_action[i]; //com position
-                yDesFull[i+6] = yd[i+6] + scale[i+6]*task_space_action[i+3];//swing foot position
-                dyd[i] = dyd[i] + scale[i]*task_space_action[i+6]; //com vel
-                dyd[i+6] = dyd[i+6] + scale[i+6]*task_space_action[i+9];//swing foot vel
+                yDesFull[i+6] = yd[i+6] + scale[i+3]*task_space_action[i+3];//swing foot position
+                dyd[i] = dyd[i] + scale[i+6]*task_space_action[i+6]; //com vel
+                dyd[i+6] = dyd[i+6] + scale[i+9]*task_space_action[i+9];//swing foot vel
             }
            
             yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
@@ -248,6 +257,25 @@ void walking::loadGoalJtPosition(){
 	YAML::Node config = YAML::LoadFile(FilePath);
   YAML::Node task_spec = YAML::LoadFile(TaskSpeification);
   
+  //whether to use nominal policy or not
+  nominal_policy = task_spec["nominal_policy"].as<bool>();
+  
+  scale = task_spec["action_scale"].as<std::vector<double>>();
+  
+  uint_fast32_t random_seed = task_spec["random_seed"].as<uint_fast32_t>();
+  gen.seed(random_seed);
+
+  terminate_early = task_spec["terminate_early"].as<bool>();
+
+  if(nominal_policy){
+    //overwrite scale to be all zero
+    scale = std::vector<double>(12,0);
+  }
+  //start logger
+  std::string dataLog = task_spec["log_file"].as<std::string>();
+  fileHandle.open(dataLog);
+
+
   //load perturbation and sampler param
   xfrc_rate = task_spec["xfrc_rate"].as<double>();
   xfrc_std = task_spec["xfrc_std"].as<double>();
@@ -303,13 +331,13 @@ void walking::loadGoalJtPosition(){
 	coeff = coeffUtils::reshapeCoeff(deg, coeff_b_vec, coeff_jt_vec);
 	coeff_remap = coeffUtils::remapSymmetric(coeff);
 
-    coeff_task = matrixUtils::reshapeMatrix(12,deg+1,coeff_task_vec);
-    coeff_task_remap = coeff_task;
-    vector_t output_sign = vector_t::Ones(12);
-        output_sign << 1,-1,1,-1,1,-1,1,-1,1,-1,1,-1;
-        for (int j=0;j<12;j++){ 
-            coeff_task_remap.block(j,0,1,8) = output_sign[j] * coeff_task_remap.block(j,0,1,8);
-        }
+  coeff_task = matrixUtils::reshapeMatrix(12,deg+1,coeff_task_vec);
+  coeff_task_remap = coeff_task;
+  vector_t output_sign = vector_t::Ones(12);
+  output_sign << 1,-1,1,-1,1,-1,1,-1,1,-1,1,-1;
+  for (int j=0;j<12;j++){ 
+      coeff_task_remap.block(j,0,1,8) = output_sign[j] * coeff_task_remap.block(j,0,1,8);
+  }
 
 }
 
@@ -613,10 +641,14 @@ void walking::TransitionLocked(mjModel* model, mjData* data) {
   double com[3] = {0.0};
   mju_addTo(com, data->subtree_com, 3);
   if(com[2]<0.75){
+    if(terminate_early && data->time > 0){
+      std::terminate();
+    }
     int home_id = mj_name2id(model, mjOBJ_KEY, "home");
     if (home_id >= 0) mj_resetDataKeyframe(model, data, home_id);
     initial_t0 = data->time;
     whichStance = Right;
+    
   }
 
   //check grf
@@ -628,9 +660,13 @@ void walking::TransitionLocked(mjModel* model, mjData* data) {
 
   double left_grf = grf.segment(0,4).sum();
   double right_grf = grf.segment(4,4).sum();
+ 
+
+  double* stancefootPos;
 
   switch (whichStance){
     case Left:{
+      stancefootPos = SensorByName(model, data, "foot_left_up");
       if (right_grf > 400 && data->time - initial_t0 > 0.8){
         whichStance = Right;
         initial_t0 = data->time;
@@ -639,6 +675,7 @@ void walking::TransitionLocked(mjModel* model, mjData* data) {
       break;
     }
     case Right:{
+      stancefootPos = SensorByName(model, data, "foot_right_up");
       if (left_grf > 400 && data->time - initial_t0 > 0.8){
         whichStance = Left;
         initial_t0 = data->time;
@@ -650,6 +687,43 @@ void walking::TransitionLocked(mjModel* model, mjData* data) {
 //   std::cout << model->nuserdata << std::endl; 
   data->userdata[0] = whichStance;
   data->userdata[1] = initial_t0;
+
+  vector_3t force = vector_3t::Zero();
+  vector_3t torque = vector_3t::Zero();
+  vector_t force_norm = vector_t::Zero(perturb_body.size());
+  vector_t torque_norm = vector_t::Zero(perturb_body.size());
+//calculate perturbation force/torque
+  //loop through perturb_body
+  for(int i=0; i< perturb_body.size();i++){
+     int body_id = perturb_body[i];
+
+     force << data->xfrc_applied[6*body_id], data->xfrc_applied[6*body_id+1], data->xfrc_applied[6*body_id+2];
+     torque << data->xfrc_applied[6*body_id+3], data->xfrc_applied[6*body_id+4], data->xfrc_applied[6*body_id+5];
+     force_norm[i] = force.norm();
+      torque_norm[i] = torque.norm();
+  }
+
+  //loop through fields to log: sim_time, stance, initial_t0, com_pos
+  if (data->time > 0.0){
+    fileHandle << data->time << "," 
+              << data->userdata[0] << "," 
+              << data->userdata[1] << "," 
+              << data->subtree_com[0]<< "," 
+              << data->subtree_com[1]<< "," 
+              << data->subtree_com[2] << ","
+              << stancefootPos[0] << ","
+              << stancefootPos[1] << ","
+              << stancefootPos[2] << ","
+              << force_norm[0] << ","
+              << force_norm[1] << ","
+              << torque_norm[0] << ","
+              << torque_norm[1]
+              << std::endl;
+  }
+
+  if(data->time > 15){
+    std::terminate();
+  }
 }
 
 }  // namespace mjpc::exo

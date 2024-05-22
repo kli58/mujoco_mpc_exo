@@ -1625,26 +1625,29 @@ void Simulate::ApplyForcePerturbations() {
 }
 
 void Simulate::ApplyTaskPerturbations() {
-  absl::BitGen gen;
+
   if (this->m != nullptr) {
      if (this->agent->ActiveTask()->xfrc_std > 0 && !this->agent->ActiveTask()->perturb_body.empty()) {
               // convert rate and scale to discrete time (Ornstein–Uhlenbeck)
               
-              // mjtNum rate = mju_exp(-m->opt.timestep / this->agent->ActiveTask()->xfrc_rate);
-              // std::cout << "rate: " << rate << std::endl;
-         
-              // mjtNum scale = this->agent->ActiveTask()->xfrc_std * mju_sqrt(1 - rate * rate);
+            if(this->d->time -this->agent->ActiveTask()->initial_t0 < 0.1){
+                
+              
+                // mjtNum rate = mju_exp(-m->opt.timestep / this->agent->ActiveTask()->xfrc_rate);
+                // std::cout << "rate: " << rate << std::endl;
+          
+                // mjtNum scale = this->agent->ActiveTask()->xfrc_std * mju_sqrt(1 - rate * rate);
 
-              for(int j=0; j < this->agent->ActiveTask()->perturb_body.size(); j++){
-                int body_id = this->agent->ActiveTask()->perturb_body[j];
-                for (int i = 0; i < 6; i++) {
-                  d->xfrc_applied[6*body_id + i] = 
-                                          this->agent->ActiveTask()->xfrc_mean*absl::Gaussian<mjtNum>(gen, 0, this->agent->ActiveTask()->xfrc_std);
-                std::cout << "xfrc_applied: " << d->xfrc_applied[6*body_id + i] << std::endl;
+                for(int j=0; j < this->agent->ActiveTask()->perturb_body.size(); j++){
+                    int body_id = this->agent->ActiveTask()->perturb_body[j];
+                    for (int i = 0; i < 6; i++) {
+                        d->xfrc_applied[6*body_id + i] = 
+                                                this->agent->ActiveTask()->xfrc_mean*absl::Gaussian<mjtNum>(this->agent->ActiveTask()->gen, 0, this->agent->ActiveTask()->xfrc_std);
+                        // std::cout << "xfrc_applied: " << d->xfrc_applied[6*body_id + i] << std::endl;
+                    }
                 }
-
-              }
-             }
+            }
+      }     
   }
 }
 //------------------------- Tell the render thread to load a file and wait -------------------------

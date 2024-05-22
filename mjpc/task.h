@@ -22,6 +22,8 @@
 
 #include <mujoco/mujoco.h>
 #include "mjpc/norm.h"
+#include "absl/random/random.h"
+#include <random>
 
 namespace mjpc {
 
@@ -155,6 +157,7 @@ class Task {
   double xfrc_std;
   double xfrc_rate;
   double xfrc_mean;
+  std::mt19937 gen;
   std::vector<double> perturb_body;
 
   // residual parameters
