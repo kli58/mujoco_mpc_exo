@@ -19,19 +19,24 @@ def get_end_time(log_entries):
         log_file = entry['parameters']['log_file']
         nominal_policy = entry['parameters']['nominal_policy']
         xfrc_mean = entry['parameters']['xfrc_mean']
-        param_combination = {'nominal_policy': nominal_policy, 'xfrc_mean': xfrc_mean}
+        if nominal_policy:
+            policy_name = "nominal"
+        else:
+            policy_name = "mjpc"
+        param_combination = {'policy_name': policy_name, 'xfrc_mean': xfrc_mean}
         file_path = log_file
         data = load_log_data(file_path)
         end_time = data.iloc[-1]['time']
         end_times.append(end_time)
+
         param_combinations.append(json.dumps(param_combination))  # Convert param combination to string for easier comparison
     return end_times, param_combinations
 
 def aggregate_summary_data(param_combinations, end_times):
-    data = pd.DataFrame({'param_combination': param_combinations, 'end_time': end_times})
+    data = pd.DataFrame({'param_combination': param_combinations, 'termination_time': end_times})
     aggregated_data = data.groupby('param_combination').agg(
-        mean_end_time=('end_time', 'mean'),
-        std_end_time=('end_time', 'std')
+        mean_end_time=('termination_time', 'mean'),
+        std_end_time=('termination_time', 'std')
     ).reset_index()
     breakpoint()
     return aggregated_data

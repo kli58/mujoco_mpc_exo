@@ -63,6 +63,8 @@ def resume_trials(trial_log_path):
             completed_trials = json.load(file)
     else:
         completed_trials = []
+    completed_trials = [{k: v for k, v in trial['parameters'].items() if k != 'log_file'} for trial in completed_trials]
+    
     
     return completed_trials
 
@@ -77,8 +79,16 @@ def run_trials(yaml_file_path, build_command, simulation_command, log_dir, param
 
     for trial, param_combination in enumerate(parameter_combinations):
         for seed in seeds:
+            param_combination['random_seed'] = seed
             trial_info = {'parameters': param_combination}
-            if trial_info in completed_trials:
+            
+            param_only_trial_info = {k: v for k, v in trial_info['parameters'].items() if k != 'log_file'}
+
+            if param_only_trial_info in completed_trials:
+                # Skip the trial if it has already been completed
+                # print paramters and seed
+                
+                print(f'Skipping trial {trial+1} with seed {seed}')
                 continue
             
             # Define log file path for the current trial
@@ -87,7 +97,7 @@ def run_trials(yaml_file_path, build_command, simulation_command, log_dir, param
             
             # Update YAML file with the new log file path and parameter combination
             param_combination['log_file'] = log_file_path
-            param_combination['random_seed'] = seed
+            
             update_task_specification(yaml_file_path, param_combination)
             
             # Start simulation
@@ -119,11 +129,13 @@ if __name__ == '__main__':
     # Define the parameters and their values for combination
     parameters = {
         'nominal_policy': [True, False],
-        'xfrc_mean': [100],
+        'xfrc_mean': [100,200],
     }
 
     # Define the list of random seeds
-    seeds = [12345,42,456]
+    seeds = [12345,42,456,789,101112,131415,161718,192021,222324,252627,
+             282930,313233,343536,373839,404142,434445,464748,495051,525354,555657,
+             585960,616263,646566,676869,707172,737475,767778,798081,828384,858687]
 
     # Generate all combinations of parameters
     parameter_combinations = generate_combinations(parameters)
