@@ -398,6 +398,57 @@ void CubicInterpolation(double* output, double x, const std::vector<double>& xs,
   }
 }
 
+
+
+// cubic polynominal interpolation
+void CubicInterpolationWithVelocity(double* output, double x, const std::vector<double>& xs,
+                        const double* ys, int dim, int length) {
+  // find interval
+  int bounds[2];
+  FindInterval(bounds, xs, x, length);
+  // bound
+  if (bounds[0] == bounds[1]) {
+    mju_copy(output, ys + dim * bounds[0], dim);
+    std::fill(output + dim, output + 2 * dim, 0.0);
+    return;
+  }
+  // coefficients
+  double coefficients[4];
+  CubicCoefficients(coefficients, x, xs, length);
+
+
+  double derivativeCoefficients[4] = {
+        coefficients[1], 
+        2 * coefficients[2],
+        3 * coefficients[3],
+        0.0
+    };
+
+
+  // interval
+  for (int i = 0; i < dim; i++) {
+    // points and slopes
+    double p0 = ys[bounds[0] * dim + i];
+    double m0 = FiniteDifferenceSlope(xs[bounds[0]], xs, ys, dim, length, i);
+    double m1 = FiniteDifferenceSlope(xs[bounds[1]], xs, ys, dim, length, i);
+    double p1 = ys[bounds[1] * dim + i];
+    // polynominal
+    output[i] = coefficients[0] * p0 + coefficients[1] * m0 +
+                coefficients[2] * p1 + coefficients[3] * m1;
+
+
+    output[i + dim] = derivativeCoefficients[0] * p0 + derivativeCoefficients[1] * m0 +
+                derivativeCoefficients[2] * p1 + derivativeCoefficients[3] * m1;
+    
+    // std::cout << "output[" << i << "]: " << output[i] << std::endl;
+    // std::cout << "output[" << i + dim << "]: " << output[i + dim] << std::endl;
+  }
+
+  // std::terminate();
+}
+
+
+
 // returns the path to the directory containing the current executable
 std::string GetExecutableDir() {
 #if defined(_WIN32) || defined(__CYGWIN__)

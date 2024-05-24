@@ -157,6 +157,7 @@ class Task {
   double xfrc_std;
   double xfrc_rate;
   double xfrc_mean;
+  bool traj_perturb;
   std::mt19937 gen;
   std::vector<double> perturb_body;
 

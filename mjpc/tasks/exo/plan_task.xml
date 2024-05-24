@@ -72,7 +72,7 @@
     <numeric name="agent_timestep" data="0.01" />
     <numeric name="sampling_spline_points" data="2 2 20" />
     <numeric name="sampling_exploration" data="0.001" />
-    <numeric name="sampling_trajectories" data="50" />
+    <numeric name="sampling_trajectories" data="10" />
     <numeric name="n_elite" data="5" />
     <numeric name="gradient_spline_points" data="5" />
     <numeric name="std_min" data="0.001 0.000001 0.01" />

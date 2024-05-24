@@ -82,7 +82,7 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
         // std::cout << "dyd: " << dyd.transpose() << std::endl;
         //loop through action dim and print out task space_action
         // std::cout << "task_space_action: ";
-        // for(int i=0; i<action_dim;i++){
+        // for(int i=0; i<action_dim*2;i++){
         //     std::cout << task_space_action[i] << " ";
         // }
         // std::cout << std::endl;
@@ -102,13 +102,17 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
         }
 
         switch(action_dim){
-          case 24:{
+          case 12:{
             for(int i=0; i<12;i++){
                 yDesFull[i] = yd[i] + scale[i]*task_space_action[i];
                 dyd[i] = dyd[i] + scale[i]*task_space_action[i+12];
             }
+            
+            yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
+		        yDesFull[1] = fmax(fmin(0.25, yDesFull[1]), -0.25);
+            yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.825);
+      
             break;
-            std::cout <<"24 dim" << std::endl;
           }
 
           case 3:{ //com position only
@@ -124,22 +128,22 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
             
           }
           
-          case 12:{ //order of task_space_action com position swing position and com vel swing vel;
-          //loop through all scale and print them out
+          // case 12:{ //order of task_space_action com position swing position and com vel swing vel;
+          // //loop through all scale and print them out
           
 
-            for(int i=0; i<3;i++){
-                yDesFull[i] = yd[i] + scale[i]*task_space_action[i]; //com position
-                yDesFull[i+6] = yd[i+6] + scale[i+3]*task_space_action[i+3];//swing foot position
-                dyd[i] = dyd[i] + scale[i+6]*task_space_action[i+6]; //com vel
-                dyd[i+6] = dyd[i+6] + scale[i+9]*task_space_action[i+9];//swing foot vel
-            }
+          //   for(int i=0; i<3;i++){
+          //       yDesFull[i] = yd[i] + scale[i]*task_space_action[i]; //com position
+          //       yDesFull[i+6] = yd[i+6] + scale[i+3]*task_space_action[i+3];//swing foot position
+          //       dyd[i] = dyd[i] + scale[i+6]*task_space_action[i+6]; //com vel
+          //       dyd[i+6] = dyd[i+6] + scale[i+9]*task_space_action[i+9];//swing foot vel
+          //   }
            
-            yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
-		        yDesFull[1] = fmax(fmin(0.25, yDesFull[1]), -0.25);
-            yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.84);
-          break;
-          }
+          //   yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
+		      //   yDesFull[1] = fmax(fmin(0.25, yDesFull[1]), -0.25);
+          //   yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.84);
+          // break;
+          // }
         }
 
 
@@ -196,8 +200,8 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
         if (!success) {
             std::cout << "IK did not converge" << std::endl;
             std::cout << "IK yd: " << yd.transpose() << std::endl;
-            // std::cout << "terminate at " << err.transpose() << std::endl;
-            // std::terminate();
+            std::cout << "terminate at " << err.transpose() << std::endl;
+            std::terminate();
         }
   
         matrix_t J_output = J.block(0,0,12,18);
@@ -259,7 +263,7 @@ void walking::loadGoalJtPosition(){
   
   //whether to use nominal policy or not
   nominal_policy = task_spec["nominal_policy"].as<bool>();
-  
+  traj_perturb = task_spec["traj_perturb"].as<bool>();
   scale = task_spec["action_scale"].as<std::vector<double>>();
   
   uint_fast32_t random_seed = task_spec["random_seed"].as<uint_fast32_t>();
@@ -286,6 +290,8 @@ void walking::loadGoalJtPosition(){
   action_bound = new double[action_dim*2];
   std::vector<double> com_bound = task_spec["com_bound"].as<std::vector<double>>();
   std::vector<double> sw_ft_bound = task_spec["sw_ft_bound"].as<std::vector<double>>();
+  std::vector<double> pelvis_bound = task_spec["pelvis_bound"].as<std::vector<double>>();
+  std::vector<double> sw_ft_ori_bound = task_spec["sw_ft_ori_bound"].as<std::vector<double>>();
   
   switch(action_dim){
 
@@ -295,24 +301,37 @@ void walking::loadGoalJtPosition(){
         action_bound[2*i] = com_bound[2*i];
         action_bound[2*i+1] = com_bound[2*i+1];
       }
+
+      for(int i=0; i<action_dim;i++){
+        action_bound[2*i+6] = -1;
+        action_bound[2*i+7] = 1;
+      }
+
       break;
     }//com position only
     case 12:{
       
-      for(int i=0; i<3;i++){
-        action_bound[2*i] = com_bound[2*i];
-        action_bound[2*i+1] = com_bound[2*i+1];
-      }
-      for(int i=0; i<3;i++){
-        action_bound[2*i+6] = sw_ft_bound[2*i];
-        action_bound[2*i+7] = sw_ft_bound[2*i+1];
-      }
-      //velocity bound
-      for(int i=0; i<6;i++){
-        action_bound[2*i+12] = -1;
-        action_bound[2*i+13] = 1;
-      }
-      break;
+    std::vector<double> all_bounds;
+    all_bounds.insert(all_bounds.end(), com_bound.begin(), com_bound.end());
+    all_bounds.insert(all_bounds.end(), pelvis_bound.begin(), pelvis_bound.end());
+    all_bounds.insert(all_bounds.end(), sw_ft_bound.begin(), sw_ft_bound.end());
+    all_bounds.insert(all_bounds.end(), sw_ft_ori_bound.begin(), sw_ft_ori_bound.end());
+
+    // Populate action_bound with the concatenated bounds
+    int bound_size = all_bounds.size();
+    for (int i = 0; i < bound_size; i++) {
+        action_bound[i] = all_bounds[i];
+    }
+
+    
+    // Velocity bound
+    // for (int i = 0; i < action_dim; i++) {
+    //     action_bound[bound_size + 2 * i] = -1;
+    //     action_bound[bound_size + 2 * i + 1] = 1;
+
+    // } 
+    break;
+
     }//com position and com vel; swing position and vel;
   }
   
@@ -338,6 +357,7 @@ void walking::loadGoalJtPosition(){
   for (int j=0;j<12;j++){ 
       coeff_task_remap.block(j,0,1,8) = output_sign[j] * coeff_task_remap.block(j,0,1,8);
   }
+
 
 }
 

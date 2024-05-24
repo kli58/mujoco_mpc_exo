@@ -42,7 +42,7 @@ void SamplingPolicy::Allocate(const mjModel* model, const Task& task,
   parameters.resize(task.action_dim * kMaxTrajectoryHorizon);
 
   // task space action
-  task_space_action = new double[task.action_dim];
+  task_space_action = new double[2*task.action_dim];
 
   // times
   times.resize(kMaxTrajectoryHorizon);
@@ -78,7 +78,7 @@ void SamplingPolicy::Reset(int horizon, const double* initial_repeated_action) {
               parameters.begin() + action_dim_* num_spline_points, 0.0);
   // }
 
-  std::fill(task_space_action, task_space_action + action_dim_, 0.0);
+  std::fill(task_space_action, task_space_action + 2*action_dim_, 0.0);
   // policy parameter times
   std::fill(times.begin(), times.begin() + horizon, 0.0);
 }
@@ -103,19 +103,26 @@ void SamplingPolicy::Action(double* action, const double* state, double time) co
       representation == PolicyRepresentation::kZeroSpline) {
     ZeroInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                       num_spline_points);
+    //velocty term should be zero
+    for(int i = action_dim_; i < 2*action_dim_; i++){
+      task_space_action[i] = 0.0;
+    }
+
   } else if (representation == PolicyRepresentation::kLinearSpline) {
     LinearInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                         num_spline_points);
   } else if (representation == PolicyRepresentation::kCubicSpline) {
-    CubicInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
+    CubicInterpolationWithVelocity(task_space_action, time, times, parameters.data(), action_dim_,
                        num_spline_points);
+
+    
   }
 
-    for(int i = 0; i < action_dim_; i++){
-    if(std::isnan(task_space_action[i])){
+    for(int i = 0; i < action_dim_*2; i++){
+    // if(std::isnan(task_space_action[i])){
       std::cout << "Action task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
-      std::terminate();
-    }
+      // std::terminate();
+    // }
      }
 
   // convert nominal task space action to joint space
@@ -137,20 +144,26 @@ void SamplingPolicy::TaskSpaceAction(double* task_action, const double* state, d
       representation == PolicyRepresentation::kZeroSpline) {
     ZeroInterpolation(task_action, time, times, parameters.data(), action_dim_,
                       num_spline_points);
+    //velocty term should be zero
+    for(int i = action_dim_; i < 2*action_dim_; i++){
+      task_space_action[i] = 0.0;
+    }
   } else if (representation == PolicyRepresentation::kLinearSpline) {
     LinearInterpolation(task_action, time, times, parameters.data(), action_dim_,
                         num_spline_points);
   } else if (representation == PolicyRepresentation::kCubicSpline) {
-    CubicInterpolation(task_action, time, times, parameters.data(), action_dim_,
+    CubicInterpolationWithVelocity(task_space_action, time, times, parameters.data(), action_dim_,
                        num_spline_points);
   }
 
-    for(int i = 0; i < action_dim_; i++){
-    if(std::isnan(task_space_action[i])){
-      std::cout << "TaskSpaceAction task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
-      std::terminate();
-    }
+  std::cout << "TaskSpaceAction task_space_action" ;
+    for(int i = 0; i < action_dim_*2; i++){
+    // if(std::isnan(task_space_action[i])){
+     std::cout  << " " << task_space_action[i]; 
+      // std::terminate();
+    // }
   }
+  std::cout << std::endl;
 
 }
 
@@ -167,24 +180,29 @@ void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const do
       representation == PolicyRepresentation::kZeroSpline) {
     ZeroInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                       num_spline_points);
+    //velocty term should be zero
+    for(int i = action_dim_; i < 2*action_dim_; i++){
+      task_space_action[i] = 0.0;
+    }
   } else if (representation == PolicyRepresentation::kLinearSpline) {
     LinearInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
                         num_spline_points);
   } else if (representation == PolicyRepresentation::kCubicSpline) {
-    CubicInterpolation(task_space_action, time, times, parameters.data(), action_dim_,
+     CubicInterpolationWithVelocity(task_space_action, time, times, parameters.data(), action_dim_,
                        num_spline_points);
   }
   
   //check if task space action is nan
-    for(int i = 0; i < action_dim_; i++){
-    if(std::isnan(task_space_action[i])){
-      std::cout << "Plan_Action task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
-      
-      std::terminate();
-    }
-    }
+   std::cout << "Plan Action task_space_action" ;
+    for(int i = 0; i < action_dim_*2; i++){
+    // if(std::isnan(task_space_action[i])){
+     std::cout  << " " << task_space_action[i]; 
+      // std::terminate();
+    // }
+  }
+  std::cout << std::endl;
 
-  Clamp(task_space_action, task->action_bound, action_dim_);
+  // Clamp(task_space_action, task->action_bound, action_dim_);
 
 
 

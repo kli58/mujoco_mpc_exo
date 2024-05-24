@@ -158,6 +158,10 @@ double FiniteDifferenceSlope(double x, const std::vector<double>& xs,
 void CubicInterpolation(double* output, double x, const std::vector<double>& xs,
                         const double* ys, int dim, int length);
 
+
+void CubicInterpolationWithVelocity(double* output, double x, const std::vector<double>& xs,
+                        const double* ys, int dim, int length);
+
 // returns the path to the directory containing the current executable
 std::string GetExecutableDir();
 
