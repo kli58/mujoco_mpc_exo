@@ -54,12 +54,16 @@ void CrossEntropyPlanner::Initialize(mjModel* model, const Task& task) {
                          "sampling_exploration");        // initial variance
   std_min_ = GetNumberOrDefault(0.1, model, "std_min");  // minimum variance
 
+  
+  nCandidates = GetNumberOrDefault(10, model, "nCandidates");  
+
   // set number of trajectories to rollout
-  num_trajectory_ = GetNumberOrDefault(10, model, "sampling_trajectories");
+  num_trajectory_ = nCandidates *GetNumberOrDefault(10, model, "sampling_trajectories");
+  std::cout <<"num_trajectory: " << num_trajectory_ << std::endl;
 
   // set number of elite samples max(best 10%, 2)
   n_elite_ =
-      GetNumberOrDefault(std::max(num_trajectory_ / 10, 2), model, "n_elite");
+      GetNumberOrDefault(std::max(nCandidates / 10, 2), model, "n_elite");
 
   if (num_trajectory_ > kMaxTrajectory) {
     mju_error_i("Too many trajectories, %d is the maximum allowed.",
@@ -99,8 +103,10 @@ void CrossEntropyPlanner::Allocate() {
 
   // need to initialize an arbitrary order of the trajectories
   trajectory_order.resize(kMaxTrajectory);
+  candidate_return.resize(kMaxTrajectory);
   for (int i = 0; i < kMaxTrajectory; i++) {
     trajectory_order[i] = i;
+    candidate_return[i] = 0;
   }
 
   // trajectories and parameters
@@ -110,6 +116,7 @@ void CrossEntropyPlanner::Allocate() {
     trajectory[i].Allocate(kMaxTrajectoryHorizon);
     candidate_policy[i].Allocate(model, *task, kMaxTrajectoryHorizon);
   }
+  
   nominal_trajectory.Initialize(num_state, model->nu, task->num_residual,
                                 task->num_trace, kMaxTrajectoryHorizon);
   nominal_trajectory.Allocate(kMaxTrajectoryHorizon);
@@ -193,18 +200,21 @@ void CrossEntropyPlanner::OptimizePolicy(int horizon, ThreadPool& pool) {
   // simulate noisy policies
   this->Rollouts(num_trajectory, horizon, pool);
 
+  
+
+
   // sort candidate policies and trajectories by score
-  for (int i = 0; i < num_trajectory; i++) {
+  for (int i = 0; i < nCandidates; i++) {
     trajectory_order[i] = i;
   }
 
   // sort so that the first ncandidates elements are the best candidates, and
   // the rest are in an unspecified order
   std::partial_sort(
-      trajectory_order.begin(), trajectory_order.begin() + num_trajectory,
+      trajectory_order.begin(), trajectory_order.begin() + nCandidates,
       trajectory_order.begin() + num_trajectory,
-      [&trajectory = trajectory](int a, int b) {
-        return trajectory[a].total_return < trajectory[b].total_return;
+      [&candidate_return = candidate_return](int a, int b) {
+        return candidate_return[a] < candidate_return[b];
       });
 
   // stop timer
@@ -234,7 +244,7 @@ void CrossEntropyPlanner::OptimizePolicy(int horizon, ThreadPool& pool) {
               candidate_policy[idx].parameters.data(), num_parameters);
 
     // add total return
-    avg_return += trajectory[idx].total_return;
+    avg_return += candidate_return[idx];
   }
 
   // normalize
@@ -266,7 +276,7 @@ void CrossEntropyPlanner::OptimizePolicy(int horizon, ThreadPool& pool) {
 
   // improvement: compare nominal to elite average
   improvement =
-      mju_max(avg_return - trajectory[trajectory_order[0]].total_return, 0.0);
+      mju_max(avg_return - candidate_return[trajectory_order[0]], 0.0);
 
   // stop timer
   policy_update_compute_time = GetDuration(policy_update_start);
@@ -395,11 +405,15 @@ void CrossEntropyPlanner::Rollouts(int num_trajectory, int horizon,
 
   // random search
   int count_before = pool.GetCount();
-  for (int i = 0; i < num_trajectory; i++) {
+  
+  int n_repeat = int(num_trajectory / nCandidates);
+
+  for (int i = 0; i < nCandidates; i++) {
+    for(int j=0; j < n_repeat; j++){
     pool.Schedule([&s = *this, &model = this->model, &task = this->task,
                    &state = this->state, &time = this->time,
                    &mocap = this->mocap, &userdata = this->userdata, horizon,
-                   std_min, i]() {
+                   std_min, i,j,n_repeat]() {
       // copy nominal policy and sample noise
       {
         const std::shared_lock<std::shared_mutex> lock(s.mtx_);
@@ -422,10 +436,11 @@ void CrossEntropyPlanner::Rollouts(int num_trajectory, int horizon,
       };
 
       // policy rollout
-      s.trajectory[i].CustomRollout(
+      s.trajectory[n_repeat*i + j].CustomRollout(
           sample_policy_i, task, model, s.data_[ThreadPool::WorkerId()].get(),
           state.data(), time, mocap.data(), userdata.data(), horizon);
     });
+  }
   }
   // nominal
   pool.Schedule([&s = *this, horizon]() { s.NominalTrajectory(horizon); });
@@ -433,6 +448,25 @@ void CrossEntropyPlanner::Rollouts(int num_trajectory, int horizon,
   // wait
   pool.WaitCount(count_before + num_trajectory + 1);
   pool.ResetCount();
+
+
+  std::cout <<"candidate_return:" ;
+  //populate candidate return = average total return over n repeat 
+  for (int i = 0; i < nCandidates; i++) {
+    double total_return = 0.0;
+    int valid_return = 0;
+    for(int j = 0; j < n_repeat; j++){
+      if(trajectory[n_repeat*i + j].failure){
+        continue;
+      }
+
+      valid_return++;
+      total_return += trajectory[n_repeat*i + j].total_return;
+    }
+    candidate_return[i] = total_return / valid_return;
+    std::cout << " " << candidate_return[i];
+  }
+  std::cout << std::endl;
 }
 
 // returns the **nominal** trajectory (this is the purple trace)

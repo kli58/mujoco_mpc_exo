@@ -128,6 +128,16 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
             
           }
           
+          case 9:{ //com pos, pelvis ori, sw pos
+            for(int i=0; i<9;i++){
+                yDesFull[i] = yd[i] + scale[i]*task_space_action[i];
+                dyd[i] = dyd[i] + scale[i]*task_space_action[i+9];
+            }
+            yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
+		        yDesFull[1] = fmax(fmin(0.25, yDesFull[1]), -0.25);
+            yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.825);
+            break;
+          }
           // case 12:{ //order of task_space_action com position swing position and com vel swing vel;
           // //loop through all scale and print them out
           
@@ -203,17 +213,19 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
             std::cout << "terminate at " << err.transpose() << std::endl;
             std::terminate();
         }
+
+        //TODO replace the IK termination with q_init
   
         matrix_t J_output = J.block(0,0,12,18);
         vector_t dq_ik = J_output.transpose()*(J_output * J_output.transpose()).inverse() * dyd;
+        
         // overide action with current qpos
         for (int i = 0; i < 12; i++) {
-        action[i] = kin_data->qpos[i+7];
+          action[i] = kin_data->qpos[i+7];
         }
 
         for(int i=0; i<12;i++){
-        // action[i+12] = dq_ik[i+6];
-        action[i+12] = dq_init[i+6];
+          action[i+12] = dq_ik[i+6];
         }
     }
 }
@@ -311,28 +323,33 @@ void walking::loadGoalJtPosition(){
     }//com position only
     case 12:{
       
-    std::vector<double> all_bounds;
-    all_bounds.insert(all_bounds.end(), com_bound.begin(), com_bound.end());
-    all_bounds.insert(all_bounds.end(), pelvis_bound.begin(), pelvis_bound.end());
-    all_bounds.insert(all_bounds.end(), sw_ft_bound.begin(), sw_ft_bound.end());
-    all_bounds.insert(all_bounds.end(), sw_ft_ori_bound.begin(), sw_ft_ori_bound.end());
+      std::vector<double> all_bounds;
+      all_bounds.insert(all_bounds.end(), com_bound.begin(), com_bound.end());
+      all_bounds.insert(all_bounds.end(), pelvis_bound.begin(), pelvis_bound.end());
+      all_bounds.insert(all_bounds.end(), sw_ft_bound.begin(), sw_ft_bound.end());
+      all_bounds.insert(all_bounds.end(), sw_ft_ori_bound.begin(), sw_ft_ori_bound.end());
 
-    // Populate action_bound with the concatenated bounds
-    int bound_size = all_bounds.size();
-    for (int i = 0; i < bound_size; i++) {
-        action_bound[i] = all_bounds[i];
-    }
-
-    
-    // Velocity bound
-    // for (int i = 0; i < action_dim; i++) {
-    //     action_bound[bound_size + 2 * i] = -1;
-    //     action_bound[bound_size + 2 * i + 1] = 1;
-
-    // } 
+      // Populate action_bound with the concatenated bounds
+      int bound_size = all_bounds.size();
+      for (int i = 0; i < bound_size; i++) {
+          action_bound[i] = all_bounds[i];
+      }
     break;
+      }//com position and com vel; swing position and vel;
 
-    }//com position and com vel; swing position and vel;
+    case 9:{
+      std::vector<double> all_bounds;
+      all_bounds.insert(all_bounds.end(), com_bound.begin(), com_bound.end());
+      all_bounds.insert(all_bounds.end(), pelvis_bound.begin(), pelvis_bound.end());
+      all_bounds.insert(all_bounds.end(), sw_ft_bound.begin(), sw_ft_bound.end());
+
+      // Populate action_bound with the concatenated bounds
+      int bound_size = all_bounds.size();
+      for (int i = 0; i < bound_size; i++) {
+          action_bound[i] = all_bounds[i];
+      }
+
+      break;}
   }
   
  
@@ -742,7 +759,7 @@ void walking::TransitionLocked(mjModel* model, mjData* data) {
   }
 
   if(data->time > 15){
-    std::terminate();
+    // std::terminate();
   }
 }
 

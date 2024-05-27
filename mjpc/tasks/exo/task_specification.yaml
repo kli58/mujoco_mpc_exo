@@ -1,5 +1,5 @@
-action_dim: 12
-action_scale: [0.1, 0.1, 0.01, 0.1, 0.1, 0.01, 0.1, 0.1, 0.1, 0.1, 0.1, 0.01]
+action_dim: 9
+action_scale: [0.1, 0.1, 0.001, 0.05, 0.05, 0.01, 0.1, 0.1, 0.05, 0.1, 0.1, 0.01]
 com_bound: [-0.1, 0.1, -0.1, 0.1, -0.05, 0.05]
 log_file: /home/amy/gitrepo/mujoco_mpc_exo/mjpc/tasks/exo/sim_data/log_trial_4_288289290_20240522_185015.csv
 nominal_policy: false
@@ -8,7 +8,7 @@ random_seed: 288289290
 pelvis_bound: [-0.1,0.1,-0.1,0.1,-0.1,0.1]
 sw_ft_bound: [-0.15, 0.15, -0.15, 0.15, -0.05, 0.05]
 sw_ft_ori_bound: [-0.1,0.1,-0.1,0.1,-0.05,0.05]
-terminate_early: true
+terminate_early: false
 xfrc_mean: 200
 xfrc_rate: 1.0
 xfrc_std: 1

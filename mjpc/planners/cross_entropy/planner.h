@@ -116,6 +116,7 @@ class CrossEntropyPlanner : public Planner {
 
   // order of indices of rolled out trajectories, ordered by total return
   std::vector<int> trajectory_order;
+  std::vector<double> candidate_return;
 
   // ----- noise ----- //
   double std_initial_;  // standard deviation for sampling normal: N(0,
@@ -143,6 +144,8 @@ class CrossEntropyPlanner : public Planner {
 
   int num_trajectory_;
   mutable std::shared_mutex mtx_;
+
+  int nCandidates;
 };
 
 }  // namespace mjpc

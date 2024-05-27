@@ -118,12 +118,12 @@ void SamplingPolicy::Action(double* action, const double* state, double time) co
     
   }
 
-    for(int i = 0; i < action_dim_*2; i++){
-    // if(std::isnan(task_space_action[i])){
-      std::cout << "Action task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
-      // std::terminate();
-    // }
-     }
+    // for(int i = 0; i < action_dim_*2; i++){
+    // // if(std::isnan(task_space_action[i])){
+    //   std::cout << "Action task_space_action[" << i << "]: " << task_space_action[i] << std::endl;
+    //   // std::terminate();
+    // // }
+    //  }
 
   // convert nominal task space action to joint space
   task->GetNominalAction(model,action,task_space_action, kin_data, time);
@@ -156,14 +156,14 @@ void SamplingPolicy::TaskSpaceAction(double* task_action, const double* state, d
                        num_spline_points);
   }
 
-  std::cout << "TaskSpaceAction task_space_action" ;
-    for(int i = 0; i < action_dim_*2; i++){
-    // if(std::isnan(task_space_action[i])){
-     std::cout  << " " << task_space_action[i]; 
-      // std::terminate();
-    // }
-  }
-  std::cout << std::endl;
+  // std::cout << "TaskSpaceAction task_space_action" ;
+  //   for(int i = 0; i < action_dim_*2; i++){
+  //   // if(std::isnan(task_space_action[i])){
+  //    std::cout  << " " << task_space_action[i]; 
+  //     // std::terminate();
+  //   // }
+  // }
+  // std::cout << std::endl;
 
 }
 
@@ -193,14 +193,14 @@ void SamplingPolicy::Plan_Action(double* action, mjData* plan_kin_data, const do
   }
   
   //check if task space action is nan
-   std::cout << "Plan Action task_space_action" ;
-    for(int i = 0; i < action_dim_*2; i++){
-    // if(std::isnan(task_space_action[i])){
-     std::cout  << " " << task_space_action[i]; 
-      // std::terminate();
-    // }
-  }
-  std::cout << std::endl;
+  //  std::cout << "Plan Action task_space_action" ;
+  //   for(int i = 0; i < action_dim_*2; i++){
+  //   // if(std::isnan(task_space_action[i])){
+  //    std::cout  << " " << task_space_action[i]; 
+  //     // std::terminate();
+  //   // }
+  // }
+  // std::cout << std::endl;
 
   // Clamp(task_space_action, task->action_bound, action_dim_);
 
