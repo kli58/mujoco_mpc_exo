@@ -130,6 +130,9 @@ class Task {
   virtual void GetNominalAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time) const {};
   virtual void GetNominalPlanAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time, double* userData) const {};
   virtual void UpdateUserData(const mjModel* model, mjData* data) const {};
+  virtual void UpdatePolicyParam(const std::vector<double>& src_parameters,
+    const std::vector<double>& src_times, int num_spline_points) const {};
+
   // mode
   int mode;
 
@@ -180,6 +183,9 @@ class Task {
   // ResidualLocked. In order to avoid such resource contention, mutex_ might be
   // temporarily unlocked, but it must be locked again before returning.
   virtual void TransitionLocked(mjModel* model, mjData* data) {}
+
+  
+
   // implementation of Task::Reset() which can assume a lock is held
   virtual void ResetLocked(const mjModel* model) {}
   // mutex which should be held on changes to InternalResidual.

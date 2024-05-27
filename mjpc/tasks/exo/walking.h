@@ -62,6 +62,8 @@ class walking : public Task {
   void GetNominalPlanAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time,double* userData) const override;
   void GetNominalAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time) const override;
   void UpdateUserData(const mjModel* model, mjData* data) const override;
+  void UpdatePolicyParam(const std::vector<double>& src_parameters,
+    const std::vector<double>& src_times, int num_spline_points) const override;
   std::string Name() const override;
   std::string XmlPath() const override;
 
@@ -70,6 +72,9 @@ class walking : public Task {
   Exo_t::matrix_t coeff_remap;
   Exo_t::matrix_t coeff_task;
   Exo_t::matrix_t coeff_task_remap;
+
+  std::vector <double> CE_params;
+  std::vector <double> CE_times;
   bool nominal_policy;
   bool terminate_early;
   std::vector<double> scale;
@@ -79,6 +84,7 @@ class walking : public Task {
   static std::tuple<Exo_t::vector_t,Exo_t::vector_t>  evalJtBezier(double time, Exo_t::matrix_t coeff_, Exo_t::matrix_t coeff_remap_,int whichStance,Exo_t::scalar_t walkStepDur_);
   static std::tuple<Exo_t::vector_t,Exo_t::vector_t>  evalTaskBezier(double time, Exo_t::matrix_t coeff_, Exo_t::matrix_t coeff_remap_,int whichStance,Exo_t::scalar_t walkStepDur_);
   std::ofstream fileHandle;
+  mutable std::ofstream CEParamsHandle;
 
  protected:
   std::unique_ptr<mjpc::ResidualFn> ResidualLocked() const override {

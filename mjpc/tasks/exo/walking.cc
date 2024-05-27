@@ -33,12 +33,12 @@ void walking::GetNominalAction(const mjModel* model, double* action, double* tas
                               // std::cout << "Getting default Walkinging pos" << std::endl;
 
 
-     //instead of use the qpos from state, use the qpos from evaluate jt bezier
-    int curStance = whichStance;
+  //instead of use the qpos from state, use the qpos from evaluate jt bezier
+  int curStance = whichStance;
     
-    double phaseVar = (time - initial_t0)/walkStepDur;
-    phaseVar = std::min(1.0, std::max(0.0, phaseVar));
-   convertAction(phaseVar,curStance,action,task_space_action, model,kin_data);
+  double phaseVar = (time - initial_t0)/walkStepDur;
+  phaseVar = std::min(1.0, std::max(0.0, phaseVar));
+  convertAction(phaseVar,curStance,action,task_space_action, model,kin_data);
 }
 
 
@@ -138,22 +138,7 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
             yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.825);
             break;
           }
-          // case 12:{ //order of task_space_action com position swing position and com vel swing vel;
-          // //loop through all scale and print them out
-          
-
-          //   for(int i=0; i<3;i++){
-          //       yDesFull[i] = yd[i] + scale[i]*task_space_action[i]; //com position
-          //       yDesFull[i+6] = yd[i+6] + scale[i+3]*task_space_action[i+3];//swing foot position
-          //       dyd[i] = dyd[i] + scale[i+6]*task_space_action[i+6]; //com vel
-          //       dyd[i+6] = dyd[i+6] + scale[i+9]*task_space_action[i+9];//swing foot vel
-          //   }
-           
-          //   yDesFull[0] = fmax(fmin(0.15, yDesFull[0]), -0.15);
-		      //   yDesFull[1] = fmax(fmin(0.25, yDesFull[1]), -0.25);
-          //   yDesFull[2] = fmax(fmin(0.9, yDesFull[2]), 0.84);
-          // break;
-          // }
+     
         }
 
 
@@ -291,6 +276,8 @@ void walking::loadGoalJtPosition(){
   std::string dataLog = task_spec["log_file"].as<std::string>();
   fileHandle.open(dataLog);
 
+  std::string paramLog = task_spec["CE_param_file"].as<std::string>();
+  CEParamsHandle.open(paramLog);
 
   //load perturbation and sampler param
   xfrc_rate = task_spec["xfrc_rate"].as<double>();
@@ -670,6 +657,19 @@ void walking::UpdateUserData(const mjModel* model, mjData* data) const{
     // std::cout << "update planning userdata " << data->userdata[0] << " " << data->userdata[1] << std::endl;
 }
 
+void walking::UpdatePolicyParam(const std::vector<double>& src_parameters,
+    const std::vector<double>& src_times, int num_spline_points) const{
+
+  // log the parameters in csv file
+  // loop through num_spline_points to log src_times
+  for(int i=0; i<num_spline_points;i++){
+    CEParamsHandle << src_times[i] << ",";
+  }
+  for(int i=0; i < num_spline_points*action_dim;i++){
+    CEParamsHandle << src_parameters[i] << ",";
+  }
+    CEParamsHandle << std::endl;
+  }
 
 void walking::TransitionLocked(mjModel* model, mjData* data) {
   // If falling update based on current policy

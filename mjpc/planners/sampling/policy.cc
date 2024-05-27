@@ -232,6 +232,8 @@ void SamplingPolicy::CopyParametersFrom(
   mju_copy(parameters.data(), src_parameters.data(),
            num_spline_points * action_dim_);
   mju_copy(times.data(), src_times.data(), num_spline_points);
+  
+  task->UpdatePolicyParam(src_parameters, src_times, num_spline_points);
 }
 
 }  // namespace mjpc
