@@ -212,7 +212,7 @@ void CrossEntropyPlanner::OptimizePolicy(int horizon, ThreadPool& pool) {
   // the rest are in an unspecified order
   std::partial_sort(
       trajectory_order.begin(), trajectory_order.begin() + nCandidates,
-      trajectory_order.begin() + num_trajectory,
+      trajectory_order.begin() + nCandidates,
       [&candidate_return = candidate_return](int a, int b) {
         return candidate_return[a] < candidate_return[b];
       });
@@ -459,11 +459,15 @@ void CrossEntropyPlanner::Rollouts(int num_trajectory, int horizon,
       if(trajectory[n_repeat*i + j].failure){
         continue;
       }
-
       valid_return++;
       total_return += trajectory[n_repeat*i + j].total_return;
     }
-    candidate_return[i] = total_return / valid_return;
+    if(valid_return == 0){
+      candidate_return[i] = 100000.0;
+    }
+    else{
+      candidate_return[i] = total_return / valid_return;
+    }
     std::cout << " " << candidate_return[i];
   }
   std::cout << std::endl;
@@ -505,7 +509,9 @@ void CrossEntropyPlanner::Traces(mjvScene* scn) {
                      color);
 
         // elite index
-        int idx = trajectory_order[k];
+        int n_repeat = int(num_trajectory_ / nCandidates);
+        int idx = trajectory_order[k]*n_repeat;
+        // int idx = trajectory_order[k];
         // make geometry
         mjv_makeConnector(
             &scn->geoms[scn->ngeom], mjGEOM_LINE, width,

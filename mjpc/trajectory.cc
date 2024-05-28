@@ -157,7 +157,7 @@ void Trajectory::CustomNoisyRollout(
     mju_copy(data->ctrl, DataAt(actions, t * nu), nu);
     mju_zero(data->xfrc_applied, 6 * model->nbody);
     // apply perturbation
-    if (task->xfrc_mean > 0 && !task->perturb_body.empty()) {
+    if (task->xfrc_mean > 0 && !task->perturb_body.empty() && task->traj_perturb) {
       
       // convert rate and scale to discrete time (Ornstein–Uhlenbeck)
       // mjtNum rate = mju_exp(-model->opt.timestep / xfrc_rate);
