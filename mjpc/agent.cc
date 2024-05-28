@@ -261,6 +261,23 @@ void Agent::SetTaskList(std::vector<std::shared_ptr<Task>> tasks) {
   mju::strcpy_arr(task_names_, concatenated_task_names.str().c_str());
 }
 
+
+void Agent::UpdatePrior() {
+  // instantiate thread pool
+  ThreadPool pool(planner_threads_);
+
+  // main loop
+  while (count_ < 150) {
+    if (model_) {
+      PlanIteration(&pool);
+      std::cout << "count: " << count_ << std::endl;
+    }
+  }  // exitr
+  
+}
+
+
+
 void Agent::PlanIteration(ThreadPool* pool) {
   // start agent timer
   auto agent_start = std::chrono::steady_clock::now();
@@ -296,6 +313,7 @@ void Agent::PlanIteration(ThreadPool* pool) {
       // counter
       count_ += 1;
     } else {
+      // std::cout << "nominal policy" << std::endl;
       // rollout nominal policy
       ActivePlanner().NominalTrajectory(steps_, *pool);
 

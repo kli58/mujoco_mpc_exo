@@ -70,6 +70,10 @@ class Agent {
   // single planner iteration
   void PlanIteration(ThreadPool* pool);
 
+
+  // single planner iteration
+  void UpdatePrior();
+
   // call planner to update nominal policy
   void Plan(std::atomic<bool>& exitrequest, std::atomic<int>& uiloadrequest);
 
