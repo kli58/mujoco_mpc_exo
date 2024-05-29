@@ -45,6 +45,8 @@ using namespace Exo_t;
 namespace taskspace_utils{
 	void getY(vector_t& y_act, const mjModel* model, mjData* data,int whichStance);
 	void getJacobian(matrix_t& J_y_h, const mjModel* model, mjData* data,int whichStance);
+	void getStairY(vector_t& y_act, const mjModel* model, mjData* data,int whichStance);
+	void getStairJacobian(matrix_t& J_y_h, const mjModel* model, mjData* data,int whichStance);
 }
 
 namespace utils {

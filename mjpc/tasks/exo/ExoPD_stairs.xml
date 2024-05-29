@@ -67,10 +67,36 @@
    </asset>
    
  <worldbody>
-      <geom conaffinity="15" condim="3" friction="1" material="plane" name="plane"
-            rgba=".9 .9 .9 1"
-            size="10 5 0.1"
-            type="plane"/>
+       <geom conaffinity="15" condim="3" friction="1" material="plane" name="box0"
+            rgba=".9 .9 .9 1" pos="-0.29 0.3 -0.1"
+            size="0.3 0.15 0.05"
+            type="box"/>
+      <geom conaffinity="15" condim="3" friction="1" material="plane" name="box1"
+            rgba=".9 .9 .9 1" pos="0.01 0 -0.05"
+            size="0.3 0.15 0.05"
+            type="box"/>
+      <geom conaffinity="15" condim="3" friction="1" material="plane" name="box2"
+            rgba=".9 .9 .9 1" pos="0.31 0.3 0.0"
+            size="0.3 0.15 0.05"
+            type="box"/>
+      <geom conaffinity="15" condim="3" friction="1" material="plane" name="box3"
+            rgba=".9 .9 .9 1" pos="0.7 0.0 0.15"
+            size="0.15 0.15 0.05"
+            type="box"/>
+      <geom conaffinity="15" condim="3" friction="1" material="plane" name="box4"
+            rgba=".9 .9 .9 1" pos="0.96 0.3 0.1"
+            size="0.15 0.2 0.05"
+            type="box"/>
+
+      <geom conaffinity="15" condim="3" friction="1" material="plane" name="box5"
+            rgba=".9 .9 .9 1" pos="1.2 0.0 0.15"
+            size="0.145 0.2 0.05"
+            type="box"/>
+
+      <geom conaffinity="15" condim="3" friction="1" material="plane" name="box6"
+            rgba=".9 .9 .9 1" pos="1.45 0.3 0.2"
+            size="0.145 0.2 0.05"
+            type="box"/>
       <body name="torso" pos="0 0 1" >
          <inertial diaginertia="9.5847      9.8649     0.57127" mass="58.1608"
                    pos="-0.051479 -3.1138e-05     0.29084"/>
@@ -86,28 +112,28 @@
             <inertial diaginertia="0.036612 0.0349177 0.00740632" mass="3.6752"
                       pos="-0.18696 0.095567 0.018365"
                       quat="0.453895 0.291805 -0.721185 0.43442"/>
-            <joint axis="1 0 0" name="LeftFrontalHipJoint" pos="0 0 0" actuatorgravcomp="false" range="-0.2 0.3"/>
+            <joint axis="1 0 0" name="LeftFrontalHipJoint" pos="0 0 0" actuatorgravcomp="true" range="-0.2 0.3"/>
             <geom conaffinity="0" contype="0" density="0" group="1" mesh="LeftFrontalHipLink"
                   type="mesh"/>
             <body name="LeftTransverseHipLink" pos="-0.135 0.169 0">
                <inertial diaginertia="0.0259937 0.0259386 0.00622165" mass="4.4176"
                          pos="0.069171 -0.008671 0.004224"
                          quat="-0.114265 0.696606 -0.205723 0.677762"/>
-               <joint axis="0 0 1" name="LeftTransverseHipJoint" pos="0 0 0" actuatorgravcomp="false" range="-0.2 0.3"/>
+               <joint axis="0 0 1" name="LeftTransverseHipJoint" pos="0 0 0" actuatorgravcomp="true" range="-0.2 0.3"/>
                <geom conaffinity="0" contype="0" density="0" group="1" mesh="LeftTransverseHipLink"
                      type="mesh"/>
                <body name="LeftSagittalHipLink" pos="0.135 0 0">
                   <inertial diaginertia="0.463547 0.452048 0.0567753" mass="15.0968"
                             pos="0.013503 -0.010695 -0.1824"
                             quat="0.549481 -0.016178 0.0126466 0.835254"/>
-                  <joint axis="0 1 0" name="LeftSagittalHipJoint" pos="0 0 0" actuatorgravcomp="false" range="-2 0.3"/>
+                  <joint axis="0 1 0" name="LeftSagittalHipJoint" pos="0 0 0" actuatorgravcomp="true" range="-2 0.3"/>
                   <geom conaffinity="0" contype="0" density="0" group="1" mesh="LeftSagittalHipLink"
                         type="mesh"/>
                   <body name="LeftSagittalKneeLink" pos="0 0.0049114 -0.38">
                      <inertial diaginertia="0.452604 0.404201 0.112265" mass="13.8351"
                                pos="-0.050154 -0.087818 -0.19965"
                                quat="0.941664 -0.142426 0.105216 -0.286204"/>
-                     <joint axis="0 1 0" name="LeftSagittalKneeJoint" pos="0 0 0" actuatorgravcomp="false" range="0 1.9"/>
+                     <joint axis="0 1 0" name="LeftSagittalKneeJoint" pos="0 0 0" actuatorgravcomp="true" range="0 1.9"/>
                      <geom conaffinity="0" contype="0" density="0" group="1" mesh="LeftSagittalKneeLink"
                            type="mesh"/>
             
@@ -119,14 +145,14 @@
                         <inertial diaginertia="0.00498533 0.00498533 0.00498533" mass="1.6764"
                                   pos="-0.043917 0.056353 -0.038953"
                                   quat="0.390876 0.856905 0.0797629 -0.326448"/>
-                        <joint axis="0 1 0" name="LeftSagittalAnkleJoint" pos="0 0 0" actuatorgravcomp="false" range="-0.3 0.2"/>
+                        <joint axis="0 1 0" name="LeftSagittalAnkleJoint" pos="0 0 0" actuatorgravcomp="true" range="-0.3 0.2"/>
                         <geom conaffinity="0" contype="0" density="0" group="1" mesh="LeftSagittalAnkleLink"
                               type="mesh"/>
                         <body name="LeftHenkeAnkleLink" pos="0 0 0">
                            <inertial diaginertia="0.0959497 0.0814429 0.0179104" mass="4.1157"
                                      pos="-0.014522 1.5667e-06 -0.093638"
                                      quat="0.361501 0.512694 0.302393 0.717649"/>
-                           <joint axis="0.788011 0 0.615661" name="LeftHenkeAnkleJoint" actuatorgravcomp="false" pos="0 0 0"
+                           <joint axis="0.788011 0 0.615661" name="LeftHenkeAnkleJoint" actuatorgravcomp="true" pos="0 0 0"
                                   range="-0.3 0.3"/>
                            <geom conaffinity="0" contype="0" density="0" group="1" mesh="LeftHenkeAnkleLink"
                                  quat="0.945518 0 -0.32557 0"
@@ -146,7 +172,9 @@
                                  rgba="1 0 0 1"
                                  size="0.0049535 0.059645 0.0165"
                                  type="box"/>
+                           <site name="left_sole_frame" pos="0.06 0 -0.1647" size=".01"/>
                            <site name="left_heel_frame" pos="0.06 0 -0.1647" size=".01"/>
+                           <site name="left_toe_frame" pos=" 0.1975 0 -0.1647" size=".01"/>
                            <site name="left_foot_imu" pos="-0.036966       0.015    -0.13705"
                                  quat="-1.6377e-07    -0.94552  -5.639e-08     0.32557"
                                  size=".01"/>
@@ -168,28 +196,28 @@
             <inertial diaginertia="0.0365973 0.0349128 0.00740791" mass="3.6752"
                       pos="-0.18696 -0.095567 0.01843"
                       quat="0.292578 0.454629 -0.434128 0.720585"/>
-            <joint axis="1 0 0" name="RightFrontalHipJoint" pos="0 0 0" actuatorgravcomp="false" range="-0.3 0.2"/>
+            <joint axis="1 0 0" name="RightFrontalHipJoint" pos="0 0 0" actuatorgravcomp="true" range="-0.3 0.2"/>
             <geom conaffinity="0" contype="0" density="0" group="1" mesh="RightFrontalHipLink"
                   type="mesh"/>
             <body name="RightTransverseHipLink" pos="-0.135 -0.169 0">
                <inertial diaginertia="0.0259901 0.0259386 0.00622121" mass="4.4176"
                          pos="0.069166 0.008663 0.004212"
                          quat="0.111328 0.697511 0.202883 0.678177"/>
-               <joint axis="0 0 1" name="RightTransverseHipJoint" pos="0 0 0" actuatorgravcomp="false" range="-0.3 0.2"/>
+               <joint axis="0 0 1" name="RightTransverseHipJoint" pos="0 0 0" actuatorgravcomp="true" range="-0.3 0.2"/>
                <geom conaffinity="0" contype="0" density="0" group="1" mesh="RightTransverseHipLink"
                      type="mesh"/>
                <body name="RightSagittalHipLink" pos="0.135 0 0">
                   <inertial diaginertia="0.463547 0.452048 0.0567753" mass="15.0968"
                             pos="0.013503 0.010695 -0.1824"
                             quat="0.835254 0.0126466 -0.016178 0.549481"/>
-                  <joint axis="0 1 0" name="RightSagittalHipJoint" pos="0 0 0" actuatorgravcomp="false" range="-2 0.3"/>
+                  <joint axis="0 1 0" name="RightSagittalHipJoint" pos="0 0 0" actuatorgravcomp="true" range="-2 0.3"/>
                   <geom conaffinity="0" contype="0" density="0" group="1" mesh="RightSagittalHipLink"
                         type="mesh"/>
                   <body name="RightSagittalKneeLink" pos="0 -0.0049114 -0.38">
                      <inertial diaginertia="0.452604 0.404201 0.112265" mass="13.8351"
                                pos="-0.050154 0.087818 -0.19965"
                                quat="0.941664 0.142426 0.105216 0.286204"/>
-                     <joint axis="0 1 0" name="RightSagittalKneeJoint" pos="0 0 0" actuatorgravcomp="false" range="0 1.9"/>
+                     <joint axis="0 1 0" name="RightSagittalKneeJoint" pos="0 0 0" actuatorgravcomp="true" range="0 1.9"/>
                      <geom conaffinity="0" contype="0" density="0" group="1" mesh="RightSagittalKneeLink"
                            type="mesh"/>
             
@@ -201,14 +229,14 @@
                         <inertial diaginertia="0.00498533 0.00498533 0.00498533" mass="1.6764"
                                   pos="-0.043917 -0.056352 -0.038953"
                                   quat="0.856905 0.390876 0.326448 -0.0797629"/>
-                        <joint axis="0 1 0" name="RightSagittalAnkleJoint" pos="0 0 0" actuatorgravcomp="false" range="-0.3 0.2"/>
+                        <joint axis="0 1 0" name="RightSagittalAnkleJoint" pos="0 0 0" actuatorgravcomp="true" range="-0.3 0.2"/>
                         <geom conaffinity="0" contype="0" density="0" group="1" mesh="RightSagittalAnkleLink"
                               type="mesh"/>
                         <body name="RightHenkeAnkleLink" pos="0 0 0">
                            <inertial diaginertia="0.0959497 0.0814429 0.0179104" mass="4.1157"
                                      pos="-0.014522 -1.5667e-06 -0.093638"
                                      quat="0.717649 0.302393 0.512694 0.361501"/>
-                           <joint axis="0.788011 0 0.615661" name="RightHenkeAnkleJoint" pos="0 0 0" actuatorgravcomp="false" 
+                           <joint axis="0.788011 0 0.615661" name="RightHenkeAnkleJoint" pos="0 0 0" actuatorgravcomp="true" 
                                   range="-0.3 0.3"/>
                            <geom conaffinity="0" contype="0" density="0" group="1" mesh="RightHenkeAnkleLink"
                                  quat="0.945518 0 -0.32557 0"
@@ -228,8 +256,10 @@
                                  rgba="1 0 0 1"
                                  size="0.0049535 0.059645 0.0165"
                                  type="box"/>
-                              
                          <site name="right_heel_frame" pos="0.06 0 -0.1647" size=".01"/>
+                         <site name="right_sole_frame" pos="0.06 0 -0.1647" size=".01"/>
+                         <site name="right_toe_frame" pos="0.1975 0 -0.1647" size=".01"/>
+                         
                            <site name="right_foot_imu" pos="-0.036966       0.015    -0.13705"
                                  quat="-1.6377e-07    -0.94552  -5.639e-08     0.32557"
                                  size=".01"/>
@@ -249,20 +279,7 @@
          </body>
       </body>
    </worldbody>
-   <contact>
-      <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="left_sole" geom2="plane"
-            margin="0.0015"/>
-      <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="right_sole" geom2="plane"
-            margin="0.0015"/>
-      <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="left_toe" geom2="plane"
-            margin="0.0015"/>
-      <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="right_toe" geom2="plane"
-            margin="0.0015"/>
-      <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="left_heel" geom2="plane"
-            margin="0.0015"/>
-      <pair condim="4" friction="1 1 0.005 0.0001 0.0001" geom1="right_heel" geom2="plane"
-            margin="0.0015"/>
-   </contact>
+
 
   
 </mujoco>

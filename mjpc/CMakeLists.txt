@@ -76,6 +76,8 @@ add_library(
   tasks/swimmer/swimmer.h
   tasks/walker/walker.cc
   tasks/walker/walker.h
+  tasks/exo/stair_walking.cc
+  tasks/exo/stair_walking.h
   tasks/exo/walking.cc
   tasks/exo/walking.h
   tasks/exo/utils.cpp

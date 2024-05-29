@@ -15,6 +15,211 @@
 
 namespace taskspace_utils{
 
+    void getStairY(vector_t& y_act,const mjModel* model, mjData* data,int whichStance) {
+        // Get the actual CoM position
+        // double* com = SensorByName(model, data, "torso_subcom");
+        // y_act.segment(0,3) << com[0], com[1], com[2];
+        // mj_comPos(model, data);
+
+        double com[3] = {0.0};
+        mju_addTo(com, data->subtree_com, 3);
+        y_act.segment(0,3) << com[0], com[1], com[2];
+
+        // std::cout << "com pos: " << com[0] << " " << com[1] << " " << com[2] << std::endl;
+
+        //Get Pelvis Orientation
+        vector_t quat_act = vector_t::Zero(4);
+        quat_act << data->qpos[3],data->qpos[4],data->qpos[5],data->qpos[6];
+        vector_t pelv_act = utils::quat2eulXYZ(quat_act);
+        
+        //Get Pelvis Angular Velocity
+        int left_foot_id = mj_name2id(model, mjOBJ_SITE, "left_sole_frame");
+        int right_foot_id = mj_name2id(model, mjOBJ_SITE, "right_sole_frame");
+        int left_foot_toe_id = mj_name2id(model, mjOBJ_SITE, "left_toe_frame");
+        int right_foot_toe_id = mj_name2id(model, mjOBJ_SITE, "right_toe_frame");
+
+
+        //extract site pos and ori from data.site_xpos and data.site_xmat
+        vector_t left_foot_pos = vector_t::Zero(3);
+        vector_t right_foot_pos = vector_t::Zero(3);
+        vector_t left_foot_toe_pos = vector_t::Zero(3);
+        vector_t right_foot_toe_pos = vector_t::Zero(3);
+        vector_t left_foot_ori = vector_t::Zero(3);
+        vector_t right_foot_ori = vector_t::Zero(3);
+
+        for(int i=0; i<3; i++){
+            left_foot_pos[i] = data->site_xpos[left_foot_id*3+i];
+            right_foot_pos[i] = data->site_xpos[right_foot_id*3+i];
+            left_foot_toe_pos[i] = data->site_xpos[left_foot_toe_id*3+i];
+            right_foot_toe_pos[i] = data->site_xpos[right_foot_toe_id*3+i];
+        }
+
+        //convert to rotation matrix to euler
+        matrix_t left_foot_rot = matrix_t::Zero(3,3);
+        matrix_t right_foot_rot = matrix_t::Zero(3,3);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<3; j++){
+                left_foot_rot(i,j) = data->site_xmat[left_foot_id*9+i*3+j];
+                right_foot_rot(i,j) = data->site_xmat[right_foot_id*9+i*3+j];
+            }
+        }
+
+        left_foot_ori = utils::quat2eulXYZ(utils::quatFrom3x3(left_foot_rot));
+        right_foot_ori = utils::quat2eulXYZ(utils::quatFrom3x3(right_foot_rot));
+
+        vector_t stance_foot_pos = vector_t::Zero(3);
+        vector_t swing_foot_pos = vector_t::Zero(3);
+        vector_t swing_foot_ori = vector_t::Zero(3);
+        vector_t stance_foot_ori = vector_t::Zero(3);
+
+        switch(whichStance){
+            case Left:{
+            // get stance and swing foot pos
+            swing_foot_pos << right_foot_toe_pos;
+            stance_foot_pos << left_foot_pos;
+
+            swing_foot_ori = right_foot_ori;
+            stance_foot_ori = left_foot_ori;
+          
+            break;}
+          
+            case Right:{
+            // get stance and swing foot pos
+            swing_foot_pos << left_foot_toe_pos;
+            stance_foot_pos << right_foot_pos;
+
+            swing_foot_ori = left_foot_ori;
+            stance_foot_ori = right_foot_ori;
+           
+            break;}
+        }
+        // std::cout << "com pos: " << y_act.segment(0,3) << std::endl;
+        // std::cout << "stance foot pos: " << stance_foot_pos << std::endl;
+
+        y_act.segment(0,3) = y_act.segment(0,3) - stance_foot_pos;
+        y_act.segment(3,3) = pelv_act;
+        y_act.segment(6,3) = swing_foot_pos-stance_foot_pos;
+        y_act.segment(9,3) = swing_foot_ori;
+        y_act.segment(12,3) = stance_foot_pos;
+        y_act.segment(15,3) = stance_foot_ori;
+
+        // std::cout << "q pos: " << std::endl;
+
+        // for(int i=0; i<model->nq; i++){
+        //     std::cout << data->qpos[i] << " ";
+        // }
+        // // std::cout << std::endl;
+        // // std::cout << "y_act: " << y_act.transpose() << std::endl;
+        // std::terminate();
+
+        }
+
+
+    void getStairJacobian(matrix_t& J_y_h, const mjModel* model, mjData* data,int whichStance){
+        //call mj_jacSite to get the jacobian
+        // void mj_jacSite(const mjModel* m, const mjData* d, mjtNum* jacp, mjtNum* jacr, int site);
+        double jacp[3*18];
+        double jacr[3*18];
+        // mj_kinematics(model, data);
+        // mj_comPos(model, data);
+
+        int torso_id = mj_name2id(model, mjOBJ_BODY, "torso");
+        mj_jacSubtreeCom(model, data, jacp, torso_id);
+
+        //extract the jacobian
+        matrix_t J = matrix_t::Zero(3,18);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J(i,j) = jacp[i*18+j];
+            }
+        }
+
+        mj_jacSite(model, data,  jacp,jacr, mj_name2id(model, mjOBJ_SITE, "left_sole_frame"));
+        matrix_t J_left = matrix_t::Zero(6,18);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_left(i,j) = jacp[i*18+j];
+            }
+        }
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_left(i+3,j) = jacr[i*18+j];
+            }
+        }
+
+        mj_jacSite(model, data,  jacp,jacr, mj_name2id(model, mjOBJ_SITE, "left_toe_frame"));
+        matrix_t J_left_toe = matrix_t::Zero(6,18);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_left_toe(i,j) = jacp[i*18+j];
+            }
+        }
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_left_toe(i+3,j) = jacr[i*18+j];
+            }
+        }
+
+
+        mj_jacSite(model, data,  jacp,jacr, mj_name2id(model, mjOBJ_SITE, "right_sole_frame"));
+        matrix_t J_right = matrix_t::Zero(6,18);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_right(i,j) = jacp[i*18+j];
+            }
+        }
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_right(i+3,j) = jacr[i*18+j];
+            }
+        }
+
+        mj_jacSite(model, data,  jacp,jacr, mj_name2id(model, mjOBJ_SITE, "right_toe_frame"));
+        matrix_t J_right_toe = matrix_t::Zero(6,18);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_right_toe(i,j) = jacp[i*18+j];
+            }
+        }
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_right_toe(i+3,j) = jacr[i*18+j];
+            }
+        }
+
+        mj_jacBody(model, data, jacp, jacr, mj_name2id(model, mjOBJ_BODY, "torso"));
+        matrix_t J_torso = matrix_t::Zero(3,18);
+        for(int i=0; i<3; i++){
+            for(int j=0; j<18; j++){
+                J_torso(i,j) = jacr[i*18+j];
+            }
+        }
+        // std::cout << "J_COM: " << J << std::endl;
+        // std::cout << "J_left: " << J_left << std::endl;
+        // std::cout << "J_right: " << J_right << std::endl;
+        // std::terminate();
+        switch(whichStance){
+            case Left:{
+                J_y_h.block(0,0,3,18) = J - J_left.block(0,0,3,18); //com2left
+                J_y_h.block(3,0,3,18) = J_torso; //pelv
+                J_y_h.block(6,0,3,18) = J_right_toe.block(0,0,3,18) - J_left.block(0,0,3,18); //right2left
+                J_y_h.block(9,0,3,18) = J_right.block(3,0,3,18); //right_foot_ori
+
+                J_y_h.block(12,0,6,18) = J_left;
+                break;
+            }
+            case Right:{
+                J_y_h.block(0,0,3,18) = J - J_right.block(0,0,3,18); //com2right
+                J_y_h.block(3,0,3,18) = J_torso; //pelv
+                J_y_h.block(6,0,3,18) = J_left_toe.block(0,0,3,18) - J_right.block(0,0,3,18); //left2right
+                J_y_h.block(9,0,3,18) = J_left.block(3,0,3,18); //left_foot_ori
+
+                J_y_h.block(12,0,6,18) = J_right;
+                break;
+            }
+        }
+    }
+
 
    void getY(vector_t& y_act,const mjModel* model, mjData* data,int whichStance) {
         // Get the actual CoM position

@@ -19,6 +19,7 @@
 
 #include "mjpc/task.h"
 #include "mjpc/tasks/exo/walking.h"
+#include "mjpc/tasks/exo/stair_walking.h"
 #include "mjpc/tasks/acrobot/acrobot.h"
 #include "mjpc/tasks/allegro/allegro.h"
 #include "mjpc/tasks/bimanual/handover/handover.h"
@@ -44,6 +45,7 @@ namespace mjpc {
 
 std::vector<std::shared_ptr<Task>> GetTasks() {
   return {
+      std::make_shared<exo::stair_walking>(),
       std::make_shared<exo::walking>(),
       std::make_shared<Acrobot>(),
       std::make_shared<Allegro>(),
