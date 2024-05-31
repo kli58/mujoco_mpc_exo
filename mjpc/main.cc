@@ -22,7 +22,7 @@
 #include <mujoco/mujoco.h>
 #include "mjpc/app.h"
 #include "mjpc/tasks/tasks.h"
-
+#include "mjpc/tasks/exo/stair_walking.h"
 ABSL_FLAG(std::string, task, "Exo Walking",
           "Which model to load on startup.");
 
@@ -48,24 +48,10 @@ int main(int argc, char** argv) {
 #endif
   absl::ParseCommandLine(argc, argv);
 
-  std::string task_name = absl::GetFlag(FLAGS_task);
-  auto tasks = mjpc::GetTasks();
-  int task_id = -1;
-  for (int i = 0; i < tasks.size(); i++) {
-    if (absl::EqualsIgnoreCase(task_name, tasks[i]->Name())) {
-      task_id = i;
-      break;
-    }
-  }
-  if (task_id == -1) {
-    std::cerr << "Invalid --task flag: '" << task_name
-              << "'. Valid values:\n";
-    for (int i = 0; i < tasks.size(); i++) {
-      std::cerr << "  " << tasks[i]->Name() << "\n";
-    }
-    mju_error("Invalid --task flag.");
-  }
+  // std::string task_name = absl::GetFlag(FLAGS_task);
+  std::vector<std::shared_ptr<mjpc::Task>> tasks = {std::make_shared<mjpc::exo::stair_walking>()};
+  int task_id = 0;
 
-  mjpc::StartApp(tasks, 0);  // start with quadruped flat
+  mjpc::StartApp(tasks, task_id);  // start with quadruped flat
   return 0;
 }

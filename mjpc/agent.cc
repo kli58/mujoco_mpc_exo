@@ -266,6 +266,7 @@ void Agent::UpdatePrior() {
   // instantiate thread pool
   ThreadPool pool(planner_threads_);
 
+  prior_ready = false;
   // main loop
   while (count_ < 150) {
     if (model_) {
@@ -273,9 +274,41 @@ void Agent::UpdatePrior() {
       std::cout << "count: " << count_ << std::endl;
     }
   }  // exitr
-  
+  prior_ready = true;
 }
 
+
+void Agent::visualize(const mjModel* m, mjData* d,std::atomic<bool>& exitrequest) {
+  // instantiate thread pool
+  ThreadPool pool(planner_threads_);
+
+  std::vector<double> qpos_d, qvel_d;
+
+  // main loop
+  while (!exitrequest.load()) {
+    if(d->time - d->userdata[1] > ActiveTask()->step_dur){
+        d->userdata[1] = d->time;
+        d->userdata[0] = 1; //Right
+      
+        continue;
+    }
+
+    std::tie(qpos_d,qvel_d) =ActiveTask()->GetDesiredState(m, d);
+
+    for (int i = 0; i < qpos_d.size(); i++) {
+        d->qpos[i] = qpos_d[i];
+    }
+    for (int i = 0; i < qvel_d.size(); i++) {
+        d->qvel[i] = qvel_d[i];
+    }
+
+
+    mj_forward(m,d);
+    state.Set(m, d); 
+    d->time += m->opt.timestep;
+   
+  }  // exitrequest sent -- stop planning
+}
 
 
 void Agent::PlanIteration(ThreadPool* pool) {
@@ -313,7 +346,7 @@ void Agent::PlanIteration(ThreadPool* pool) {
       // counter
       count_ += 1;
     } else {
-      // std::cout << "nominal policy" << std::endl;
+      std::cout << "nominal policy" << std::endl;
       // rollout nominal policy
       ActivePlanner().NominalTrajectory(steps_, *pool);
 

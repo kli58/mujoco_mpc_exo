@@ -75,12 +75,12 @@
             rgba=".9 .9 .9 1" pos="0.01 0 -0.05"
             size="0.3 0.15 0.05"
             type="box"/>
-      <geom conaffinity="15" condim="3" friction="1" material="plane" name="box2"
+      <!-- <geom conaffinity="15" condim="3" friction="1" material="plane" name="box2"
             rgba=".9 .9 .9 1" pos="0.31 0.3 0.0"
             size="0.3 0.15 0.05"
             type="box"/>
       <geom conaffinity="15" condim="3" friction="1" material="plane" name="box3"
-            rgba=".9 .9 .9 1" pos="0.7 0.0 0.15"
+            rgba=".9 .9 .9 1" pos="0.7 0.0 0.05"
             size="0.15 0.15 0.05"
             type="box"/>
       <geom conaffinity="15" condim="3" friction="1" material="plane" name="box4"
@@ -96,7 +96,7 @@
       <geom conaffinity="15" condim="3" friction="1" material="plane" name="box6"
             rgba=".9 .9 .9 1" pos="1.45 0.3 0.2"
             size="0.145 0.2 0.05"
-            type="box"/>
+            type="box"/> -->
       <body name="torso" pos="0 0 1" >
          <inertial diaginertia="9.5847      9.8649     0.57127" mass="58.1608"
                    pos="-0.051479 -3.1138e-05     0.29084"/>

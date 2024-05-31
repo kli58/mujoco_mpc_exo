@@ -19,13 +19,13 @@ void walking::GetNominalPlanAction(const mjModel* model, double* action, double*
        //instead of use the qpos from state, use the qpos from evaluate jt bezier
     // int numCycle = static_cast<int>((time) / walkStepDur);
 
-    int curStance = userData[0];
+     int curStance = userData[0];
     
-    double phaseVar = (time - userData[1])/walkStepDur;
+    double curTime = (time - userData[1])/walkStepDur;
     
-    phaseVar = std::min(1.0, std::max(0.0, phaseVar));
+    // phaseVar = std::min(1.0, std::max(0.0, phaseVar));
   //  std::cout << "nomianl plan action " << phaseVar << " " << curStance << " " << time << " " << userData[1] << " " << walkStepDur << std::endl;
-   convertAction(phaseVar,curStance,action,task_space_action,model,kin_data);
+   convertAction(curTime,curStance,action,task_space_action,model,kin_data);
 
 }
 
@@ -36,15 +36,16 @@ void walking::GetNominalAction(const mjModel* model, double* action, double* tas
   //instead of use the qpos from state, use the qpos from evaluate jt bezier
   int curStance = whichStance;
     
-  double phaseVar = (time - initial_t0)/walkStepDur;
-  phaseVar = std::min(1.0, std::max(0.0, phaseVar));
-  convertAction(phaseVar,curStance,action,task_space_action, model,kin_data);
+  double curTime = (time - initial_t0)/walkStepDur;
+
+  convertAction(curTime,curStance,action,task_space_action, model,kin_data);
 }
 
 
-void walking::convertAction(double phaseVar, int curStance, double* action, double* task_space_action, const mjModel* model,mjData* kin_data) const{
-  vector_t q_init,dq_init;
-    std::tie(q_init,dq_init) = walking::evalJtBezier(phaseVar,coeff,coeff_remap,curStance, walkStepDur);
+
+void walking::convertAction(double curTime, int curStance, double* action, double* task_space_action, const mjModel* model,mjData* kin_data) const{
+    vector_t q_init,dq_init;
+    std::tie(q_init,dq_init) = walking::evalJtBezier(curTime,coeff,coeff_remap,curStance, walkStepDur);
 
     bool jt_space = false;
     if(jt_space){
@@ -67,7 +68,7 @@ void walking::convertAction(double phaseVar, int curStance, double* action, doub
 
         //loop through the first 12 element
         vector_t yd,dyd = vector_t::Zero(12);
-        std::tie(yd,dyd) = evalTaskBezier(phaseVar,coeff_task,coeff_task_remap,curStance, walkStepDur);
+        std::tie(yd,dyd) = evalTaskBezier(curTime,coeff_task,coeff_task_remap,curStance, walkStepDur);
 
         // yd[2] = yd[2] - 0.005;
         yDesFull.segment(0,12) = yd;
@@ -371,7 +372,8 @@ std::tuple<vector_t,vector_t> walking::evalJtBezier(double time,matrix_t coeff_,
 
   // Calculate the phase variable within the current cycle
   scalar_t phaseVar = (time) / walkStepDur_;
-
+  phaseVar = std::min(1.0, std::max(0.0, phaseVar));
+  
 	matrix_t coeff_cur = matrix_t::Zero(18,8);
 	switch(stance){
 		case Left:{//left stance; frost assume right stance so need to use the remap coefficient
@@ -411,7 +413,7 @@ std::tuple<vector_t,vector_t> walking::evalTaskBezier(double time,matrix_t coeff
 
   // Calculate the phase variable within the current cycle
   scalar_t phaseVar = (time) / walkStepDur_;
-
+  phaseVar = std::min(1.0, std::max(0.0, phaseVar));
 
 	matrix_t coeff_cur = matrix_t::Zero(12,8);
 	switch(stance){

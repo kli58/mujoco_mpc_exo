@@ -21,11 +21,11 @@ void stair_walking::GetNominalPlanAction(const mjModel* model, double* action, d
 
     int curStance = userData[0];
     
-    double phaseVar = (time - userData[1])/walkStepDur;
+    double curTime = (time - userData[1])/walkStepDur;
     
-    phaseVar = std::min(1.0, std::max(0.0, phaseVar));
+    // phaseVar = std::min(1.0, std::max(0.0, phaseVar));
   //  std::cout << "nomianl plan action " << phaseVar << " " << curStance << " " << time << " " << userData[1] << " " << walkStepDur << std::endl;
-   convertAction(phaseVar,curStance,action,task_space_action,model,kin_data);
+   convertAction(curTime,curStance,action,task_space_action,model,kin_data);
 
 }
 
@@ -36,15 +36,30 @@ void stair_walking::GetNominalAction(const mjModel* model, double* action, doubl
   //instead of use the qpos from state, use the qpos from evaluate jt bezier
   int curStance = whichStance;
     
-  double phaseVar = (time - initial_t0)/walkStepDur;
-  phaseVar = std::min(1.0, std::max(0.0, phaseVar));
-  convertAction(phaseVar,curStance,action,task_space_action, model,kin_data);
+  double curTime = (time - initial_t0)/walkStepDur;
+  
+  convertAction(curTime,curStance,action,task_space_action, model,kin_data);
+}
+
+std::tuple<std::vector<double>, std::vector<double>> stair_walking::GetDesiredState(const mjModel* model, mjData* data) const{
+  int curStance = data->userdata[0];
+    
+  double curTime = (data->time - data->userdata[1]);
+  
+  vector_t q_init,dq_init;
+  std::tie(q_init,dq_init) = stair_walking::evalJtBezier(curTime,coeff,coeff_remap,curStance, walkStepDur);
+
+  //convert q_init, dq_init to std::vector<double>
+  std::vector<double> q_init_vector(q_init.data(), q_init.data() + q_init.size());
+  std::vector<double> dq_init_vector(dq_init.data(), dq_init.data() + dq_init.size());
+
+  return std::tie(q_init_vector,dq_init_vector);
 }
 
 
-void stair_walking::convertAction(double phaseVar, int curStance, double* action, double* task_space_action, const mjModel* model,mjData* kin_data) const{
+void stair_walking::convertAction(double curTime, int curStance, double* action, double* task_space_action, const mjModel* model,mjData* kin_data) const{
   vector_t q_init,dq_init;
-    std::tie(q_init,dq_init) = stair_walking::evalJtBezier(phaseVar,coeff,coeff_remap,curStance, walkStepDur);
+    std::tie(q_init,dq_init) = stair_walking::evalJtBezier(curTime,coeff,coeff_remap,curStance, walkStepDur);
 
     bool jt_space = false;
     if(jt_space){
@@ -53,8 +68,8 @@ void stair_walking::convertAction(double phaseVar, int curStance, double* action
         }
 
         for(int i=0; i<12;i++){
-          action[i+12] = dq_init[i+6];
-            // action[i+12] = scale[i] *task_space_action[i+12] + dq_init[i+6];
+          // action[i+12] = dq_init[i+6];
+            action[i+12] = scale[i] *task_space_action[i+12] + dq_init[i+6];
         }
     }
     else{
@@ -68,7 +83,7 @@ void stair_walking::convertAction(double phaseVar, int curStance, double* action
 
         //loop through the first 12 element
         vector_t yd,dyd = vector_t::Zero(12);
-        std::tie(yd,dyd) = evalTaskBezier(phaseVar,coeff_task,coeff_task_remap,curStance, walkStepDur);
+        std::tie(yd,dyd) = evalTaskBezier(curTime,coeff_task,coeff_task_remap,curStance, walkStepDur);
 
         // yd[2] = yd[2] - 0.005;
         yDesFull.segment(0,12) = yd;
@@ -239,7 +254,7 @@ void stair_walking::convertAction(double phaseVar, int curStance, double* action
 }
 
 std::string stair_walking::XmlPath() const {
-  return GetModelPath("exo/plan_task.xml");
+  return GetModelPath("exo/stair_plan_task.xml");
 }
 
 
@@ -407,7 +422,7 @@ std::tuple<vector_t,vector_t> stair_walking::evalJtBezier(double time,matrix_t c
 
   // Calculate the phase variable within the current cycle
   scalar_t phaseVar = (time) / walkStepDur_;
-
+  phaseVar = std::min(1.0, std::max(0.0, phaseVar));
 	matrix_t coeff_cur = matrix_t::Zero(18,8);
 	switch(stance){
 		case Left:{//left stance; frost assume right stance so need to use the remap coefficient
@@ -447,7 +462,7 @@ std::tuple<vector_t,vector_t> stair_walking::evalTaskBezier(double time,matrix_t
 
   // Calculate the phase variable within the current cycle
   scalar_t phaseVar = (time) / walkStepDur_;
-
+  phaseVar = std::min(1.0, std::max(0.0, phaseVar));
 
 	matrix_t coeff_cur = matrix_t::Zero(12,8);
 	switch(stance){
@@ -674,7 +689,7 @@ void stair_walking::UpdateUserData(const mjModel* model, mjData* data) const{
     scalar_t curStancet0 = data->userdata[1];
     switch (curStance){
       case Left:{
-        if ((right_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= 1.0){
+        if ((right_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= step_dur){
           curStance = Right;
           curStancet0 = data->time;
           // std::cout << "Planner Switch to Right" << std::endl;
@@ -682,7 +697,7 @@ void stair_walking::UpdateUserData(const mjModel* model, mjData* data) const{
         break;
       }
       case Right:{
-        if ((left_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= 1.0){
+        if ((left_grf > 500 && data->time - curStancet0 > 0.9) || data->time-curStancet0 >= step_dur){
           curStance = Left;
           curStancet0 = data->time;
           // std::cout << "Planner Switch to Left" << std::endl;
@@ -743,19 +758,19 @@ void stair_walking::TransitionLocked(mjModel* model, mjData* data) {
   switch (whichStance){
     case Left:{
       stancefootPos = SensorByName(model, data, "foot_left_up");
-      if (right_grf > 400 && data->time - initial_t0 > 0.8){
+      if (right_grf > 400 && (data->time - initial_t0)/step_dur > 0.8){
         whichStance = Right;
         initial_t0 = data->time;
-        std::cout << "Switch to Right" << std::endl;
+        std::cout << "TransitionLocked Switch to Right" << std::endl;
       }
       break;
     }
     case Right:{
       stancefootPos = SensorByName(model, data, "foot_right_up");
-      if (left_grf > 400 && data->time - initial_t0 > 0.8){
+      if (left_grf > 400 && (data->time - initial_t0)/step_dur > 0.8){
         whichStance = Left;
         initial_t0 = data->time;
-        std::cout << "Switch to Left" << std::endl;
+        std::cout << "TransitionLocked Switch to Left" << std::endl;
       }
       break;
     }

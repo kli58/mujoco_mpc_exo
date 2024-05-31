@@ -146,6 +146,8 @@ class CrossEntropyPlanner : public Planner {
   mutable std::shared_mutex mtx_;
 
   int nCandidates;
+
+  
 };
 
 }  // namespace mjpc

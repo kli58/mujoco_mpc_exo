@@ -63,7 +63,8 @@ class stair_walking : public Task {
   void GetNominalAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time) const override;
   void UpdateUserData(const mjModel* model, mjData* data) const override;
   void UpdatePolicyParam(const std::vector<double>& src_parameters,
-    const std::vector<double>& src_times, int num_spline_points) const override;
+  const std::vector<double>& src_times, int num_spline_points) const override;
+  std::tuple<std::vector<double>,  std::vector<double>> GetDesiredState(const mjModel* model, mjData* data) const override;
   std::string Name() const override;
   std::string XmlPath() const override;
 

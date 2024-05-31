@@ -77,6 +77,7 @@ class Agent {
   // call planner to update nominal policy
   void Plan(std::atomic<bool>& exitrequest, std::atomic<int>& uiloadrequest);
 
+  void visualize(const mjModel* model, mjData* data,std::atomic<bool>& exitrequest);
   using StepJob =
       absl::AnyInvocable<void(Agent*, const mjModel*, mjData*)>;
 
@@ -191,6 +192,7 @@ class Agent {
   bool reset_estimator = true;
   bool estimator_enabled = false;
 
+    bool prior_ready;
  private:
   // model
   mjModel* model_ = nullptr;
@@ -251,6 +253,8 @@ class Agent {
 
   // max threads for estimation
   int estimator_threads_;
+
+
 };
 
 }  // namespace mjpc

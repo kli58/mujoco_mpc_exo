@@ -129,9 +129,9 @@ class Task {
   //custom modification
   virtual void GetNominalAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time) const {};
   virtual void GetNominalPlanAction(const mjModel* model, double* action,double* task_space_action, mjData* kin_data, double time, double* userData) const {};
+  virtual std::tuple<std::vector<double>, std::vector<double>> GetDesiredState(const mjModel* model, mjData* data) const {return std::make_tuple(std::vector<double>(),std::vector<double>());};
   virtual void UpdateUserData(const mjModel* model, mjData* data) const {};
-  virtual void UpdatePolicyParam(const std::vector<double>& src_parameters,
-    const std::vector<double>& src_times, int num_spline_points) const {};
+  virtual void UpdatePolicyParam(const std::vector<double>& src_parameters,const std::vector<double>& src_times, int num_spline_points) const {};
 
   // mode
   int mode;
